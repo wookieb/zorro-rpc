@@ -8,8 +8,10 @@ branches:
     - master
 
 before_script:
- - pecl channel-discover php-msgpack.googlecode.com/svn/pecl
- - pecl install msgpack/msgpack-beta
+ - git clone https://github.com/msgpack/msgpack-php.git
+ - cd msgpack-php
+ - phpize
+ - ./configure && make && make install
  - phpenv rehash
  - echo "extension=msgpack.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
  - phpenv config-add php.ini
