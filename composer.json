@@ -8,7 +8,7 @@
     }
   ],
   "require": {
-
+    "ext-zmq": "*"
   },
   "require-dev": {
     "phpunit/phpunit": "3.7.*"
