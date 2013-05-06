@@ -13,4 +13,9 @@
          stopOnSkipped="false"
          verbose="true">
 
+        <testsuites>
+            <testsuite name="ZorroRPC">
+                <directory>./tests/Wookieb/ZorroRPC</directory>
+            </testsuite>
+        </testsuites>
 </phpunit>
