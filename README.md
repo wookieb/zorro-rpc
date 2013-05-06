@@ -1,11 +1,16 @@
-= ZorroRPC
+ZorroRPC
+========
+
+
 Zorro RPC is RPC library based on ZeroMQ (REQ - REP topology) with msgpack serialization
 
-== Examples
+Examples
+========
 
-=== Server
+Server
+-----
 
-```
+```php
 use Wookieb\ZorroRPC\Server\Server;
 
 $server = Server::create('tcp://0.0.0.0:8000');
@@ -19,8 +24,9 @@ $server->registerMethod('basicRPCMethod', 'basicRPCMethod');
 $server->run();
 ```
 
-=== Client
-```
+Client
+------
+```php
 use Wookieb\ZorroRPC\Client\Client;
 
 $client = Client::create('tcp://0.0.0.0:8000');
