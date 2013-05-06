@@ -1,0 +1,21 @@
+{
+  "name": "wookieb/zorro-rpc",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "wookieb",
+      "email": "wookieb@wp.pl"
+    }
+  ],
+  "require": {
+
+  },
+  "require-dev": {
+    "phpunit/phpunit": "3.7.*"
+  },
+  "autoload": {
+    "psr-0": {
+      "Wookieb\\ZorroRPC": "src"
+    }
+  }
+}
