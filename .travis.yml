@@ -14,5 +14,6 @@ before_script:
  - ./configure && make && make install
  - phpenv rehash
  - echo "extension=msgpack.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+ - cd ..
  - phpenv config-add php.ini
  - composer install
