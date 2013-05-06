@@ -8,6 +8,7 @@ branches:
     - master
 
 before_script:
+ - pecl channel-discover php-msgpack.googlecode.com/svn/pecl
  - pecl install msgpack/msgpack-beta
  - phpenv config-add php.ini
  - composer install
