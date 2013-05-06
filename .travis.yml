@@ -11,5 +11,6 @@ before_script:
  - pecl channel-discover php-msgpack.googlecode.com/svn/pecl
  - pecl install msgpack/msgpack-beta
  - phpenv rehash
+ - echo "extension=msgpack.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
  - phpenv config-add php.ini
  - composer install
