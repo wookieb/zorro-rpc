@@ -10,5 +10,6 @@ branches:
 before_script:
  - pecl channel-discover php-msgpack.googlecode.com/svn/pecl
  - pecl install msgpack/msgpack-beta
+ - phpenv rehash
  - phpenv config-add php.ini
  - composer install
