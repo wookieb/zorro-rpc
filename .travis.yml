@@ -8,4 +8,5 @@ branches:
     - master
 
 before_script:
+ - phpenv config-add php.ini
  - composer install
