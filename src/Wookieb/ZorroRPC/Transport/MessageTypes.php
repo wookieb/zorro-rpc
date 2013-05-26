@@ -1,5 +1,6 @@
 <?php
-namespace Wookieb\ZorroRPC;
+namespace Wookieb\ZorroRPC\Transport;
+use Wookieb\ZorroRPC\Dictionary;
 
 /**
  * Dictionary for ZorroRPC message types

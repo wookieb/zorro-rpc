@@ -4,9 +4,9 @@ namespace Wookieb\ZorroRPC\Exception;
 /**
  * Thrown when when timeout occurs
  *
- * @author Wookieb\ZorroRPC\Exception
+ * @author wookieb <wookieb@wp.pl>
  */
-class TimeoutException extends RPCException
+class TimeoutException extends TransportException
 {
 
 }

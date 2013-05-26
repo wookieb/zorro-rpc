@@ -2,11 +2,11 @@
 namespace Wookieb\ZorroRPC\Exception;
 
 /**
- * Thrown when client receive response that is an error
+ * Thrown when client receive error response
  *
- * @author Wookieb\ZorroRPC\Exception
+ * @author wookieb <wookieb@wp.pl>
  */
-class ErrorResponseException extends RPCException
+class ErrorResponseException extends ZorroRPCException
 {
     private $error;
 

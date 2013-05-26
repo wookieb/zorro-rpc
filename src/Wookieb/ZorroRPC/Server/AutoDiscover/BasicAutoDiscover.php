@@ -6,9 +6,9 @@ use Wookieb\ZorroRPC\Server\MethodTypes;
 use Wookieb\ZorroRPC\Server\Method;
 
 /**
- * Autodiscover that retrieves rpc methods from object where every public method will be treated as RPC method
+ * Autodiscover that retrieve rpc methods from object where every public method will be treated as RPC method
  *
- * Type recognition based on method name prefix
+ * RPC method type recognition based on method name prefix
  * oneWayCall_* => ONE WAY CALL method
  * push_* => PUSH method
  * [without_prefix] => BASIC method

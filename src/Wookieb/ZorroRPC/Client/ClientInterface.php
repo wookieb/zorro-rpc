@@ -3,6 +3,8 @@ namespace Wookieb\ZorroRPC\Client;
 use Wookieb\ZorroRPC\Exception\ErrorResponseException;
 use Wookieb\ZorroRPC\Exception\TimeoutException;
 use Wookieb\ZorroRPC\Exception\FormatException;
+use Wookieb\ZorroRPC\Headers\Headers;
+use Wookieb\ZorroRPC\Serializer\ClientSerializerInterface;
 
 /**
  * ZorroRPC client interface
@@ -22,7 +24,7 @@ interface ClientInterface
      * @throws TimeoutException when timeout occurs :)
      * @throws FormatException when response from server is malformed
      */
-    function call($method, array $arguments = array());
+    function call($method, array $arguments = array(), Headers $headers = null);
 
     /**
      * Perform one way call that does not wait for finish of RPC method execution
@@ -33,7 +35,7 @@ interface ClientInterface
      * @throws TimeoutException when timeout occurs :)
      * @throws FormatException when response from server is malformed
      */
-    function oneWayCall($method, array $arguments = array());
+    function oneWayCall($method, array $arguments = array(), Headers $headers = null);
 
     /**
      * Perform ping to RPC server
@@ -59,5 +61,33 @@ interface ClientInterface
      * @throws TimeoutException when timeout occurs :)
      * @throws FormatException when response from server is malformed
      */
-    function push($method, array $arguments = array());
+    function push($method, array $arguments = array(), Headers $headers = null);
+
+    /**
+     * Set default request headers
+     *
+     * @param Headers $headers
+     * @return self
+     */
+    function setDefaultHeaders(Headers $headers = null);
+
+    /**
+     * @return Headers null if no default headers
+     */
+    function getDefaultHeaders();
+
+    /**
+     * Set serializer
+     *
+     * @param ClientSerializerInterface $serializer
+     * @return self
+     */
+    function setSerializer(ClientSerializerInterface $serializer);
+
+    /**
+     * Return current serializer
+     *
+     * @return ClientSerializerInterface
+     */
+    function getSerializer();
 }

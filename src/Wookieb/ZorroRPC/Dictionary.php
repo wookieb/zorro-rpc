@@ -8,6 +8,8 @@ namespace Wookieb\ZorroRPC;
  */
 abstract class Dictionary
 {
+    private static $cache = array();
+
     /**
      * Check whether current class contain given value
      *
@@ -26,10 +28,28 @@ abstract class Dictionary
      */
     public static function getAll()
     {
-        if (!static::$types) {
-            $class = new \ReflectionClass(get_called_class());
-            static::$types = $class->getConstants();
+        $class = get_called_class();
+
+        if (!isset(self::$cache[$class])) {
+            $classReflection = new \ReflectionClass(get_called_class());
+            self::$cache[$class] = $classReflection->getConstants();
         }
-        return static::$types;
+        return self::$cache[$class];
+    }
+
+    /**
+     * Return the name of given value
+     *
+     * @param mixed $value
+     * @return string
+     * @throws \OutOfBoundsException
+     */
+    public static function getName($value)
+    {
+        $key = array_search($value, self::getAll(), true);
+        if ($key === false) {
+            throw new \OutOfBoundsException('There is no name in dictionary for given value "'.$value.'"');
+        }
+        return $key;
     }
 }

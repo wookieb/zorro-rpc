@@ -12,6 +12,4 @@ class MethodTypes extends Dictionary
     const BASIC = 1;
     const ONE_WAY = 2;
     const PUSH = 3;
-
-    protected static $types;
 }

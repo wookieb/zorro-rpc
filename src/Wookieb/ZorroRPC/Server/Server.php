@@ -1,13 +1,15 @@
 <?php
 namespace Wookieb\ZorroRPC\Server;
-use Wookieb\ZorroRPC\Exception\FormatException;
-use Wookieb\ZorroRPC\Exception\RPCException;
+use Psr\Log\LoggerAwareInterface;
+use Wookieb\ZorroRPC\Exception\ServerException;
+use Wookieb\ZorroRPC\Serializer\ServerSerializerInterface;
+use Wookieb\ZorroRPC\Transport\MessageTypes;
+use Wookieb\ZorroRPC\Transport\ServerTransportInterface;
+use Wookieb\ZorroRPC\Transport\Response;
+use Wookieb\ZorroRPC\Transport\Request;
 use Wookieb\ZorroRPC\Exception\NoSuchMethodException;
-use Wookieb\ZorroRPC\MessageTypes;
-use \ZMQSocket;
-use \ZMQSocketException;
-use \ZMQContext;
-use \ZMQ;
+use Wookieb\ZorroRPC\Headers\Headers;
+use Psr\Log\LoggerInterface;
 
 /**
  * Basic implementation of ZorroRPC server
@@ -16,35 +18,74 @@ use \ZMQ;
  */
 class Server implements ServerInterface
 {
-    private $socket;
-
     private $methods = array();
 
     /**
-     * @param ZMQSocket $socket instance of ZeroMQ REP socket
+     * @var ServerSerializerInterface
      */
-    public function __construct(ZMQSocket $socket)
+    private $serializer;
+
+    /**
+     * @var \Wookieb\ZorroRPC\Transport\ServerTransportInterface
+     */
+    private $transport;
+
+    private $headers;
+
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    private static $messageTypeToMethodType = array(
+        MessageTypes::ONE_WAY_CALL => MethodTypes::ONE_WAY,
+        MessageTypes::REQUEST => MethodTypes::BASIC,
+        MessageTypes::PUSH => MethodTypes::PUSH
+    );
+
+    public function __construct(ServerTransportInterface $transport, ServerSerializerInterface $serializer)
     {
-        if ($socket->getSocketType() !== ZMQ::SOCKET_REP) {
-            throw new RPCException('Invalid zeromq socket type - REP required');
-        }
-        $this->socket = $socket;
+        $this->transport = $transport;
+        $this->setSerializer($serializer);
+
+        $this->headers = new Headers();
     }
 
     /**
-     * Creates instance of Server with newly created socket
-     *
-     * @param string $bindAddress address to listen for
-     * @param ZMQContext $context
      * @return self
      */
-    public static function create($bindAddress, ZMQContext $context = null)
+    public function setLogger(LoggerInterface $logger)
     {
-        $context = $context ? $context : new ZMQContext();
-        $socket = $context->getSocket(ZMQ::SOCKET_REP);
-        $socket->bind($bindAddress);
-        return new self($socket);
+        $this->logger = $logger;
+        return $this;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setSerializer(ServerSerializerInterface $serializer)
+    {
+        $this->serializer = $serializer;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getSerializer()
+    {
+        return $this->serializer;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    function setDefaultHeaders(Headers $headers)
+    {
+        $this->headers = $headers;
+        return $this;
+    }
+
 
     /**
      * {@inheritDoc}
@@ -54,7 +95,6 @@ class Server implements ServerInterface
         if (!$name instanceof Method) {
             $name = new Method($name, $callback, $type);
         }
-
         $this->methods[$name->getType()][$name->getName()] = $name;
         return $this;
     }
@@ -78,111 +118,106 @@ class Server implements ServerInterface
     public function run()
     {
         while (true) {
-            try {
-                $request = $this->decode($this->socket->recv());
-                $this->validateRequest($request);
+            $this->handleCall();
+        }
+    }
 
-                if ($request[0] === MessageTypes::PING) {
-                    $this->respond($this->createResponse(MessageTypes::PONG, null));
-                    continue;
-                }
-                $method = $request[1];
-                $arguments = $request[2];
-                $this->runMethod($method, $arguments, $request[0]);
-            } catch (\Exception $e) {
-                // TODO :)
+    public function handleCall()
+    {
+        try {
+            $request = $this->transport->receiveRequest();
+            if ($request->getType() === MessageTypes::PING) {
+                $this->transport->sendResponse(new Response(MessageTypes::PONG));
+                return;
             }
+            $this->runMethodForRequest($request);
+        } catch (\Exception $e) {
+
+            $exception = new ServerException(
+                'Server error: '.$e->getMessage(),
+                $this->transport->isWaitingForResponse(),
+                $e
+            );
+
+            if ($this->logger) {
+                $this->logger->error($exception);
+            }
+
+            if ($this->transport->isWaitingForResponse()) {
+                $request = new Request();
+                $request->setMethodName('')
+                    ->setType(MessageTypes::REQUEST);
+
+                $response = new Response();
+                $this->createResponse(MessageTypes::ERROR, $exception, $response, $request);
+
+                $this->transport->sendResponse($response);
+            }
+
         }
     }
 
-    private function decode($message)
+    private function runMethodForRequest(Request $request)
     {
-        return msgpack_unpack($message);
-    }
+        $methodType = self::$messageTypeToMethodType[$request->getType()];
+        $callback = $this->getMethodCallback($request->getMethodName(), $methodType);
 
-    private function validateRequest($request)
-    {
-        if (!is_array($request)) {
-            throw new FormatException('Invalid request format - not array', $request);
-        }
+        $arguments = $this->serializer->unserializeArguments(
+            $request->getMethodName(),
+            $request->getArgumentsBody(),
+            $request->getHeaders()->get('Content-type')
+        );
 
-        if (!isset($request[0])) {
-            throw new FormatException('Invalid request format - no request type', $request);
-        }
+        $response = new Response();
+        $response->setHeaders(clone $this->headers);
 
-        if (!MessageTypes::isValid($request[0])) {
-            throw new FormatException('Invalid request format - unsupported request type', $request);
-        }
-
-        // no method name = PING request
-        if (!isset($request[1])) {
-            return;
-        }
-
-        if (!isset($request[2])) {
-            throw new FormatException('Invalid request format - no arguments', $request);
-        }
-    }
-
-    private function createResponse($type, $response)
-    {
-        return $this->encode(array(
-            $type, $response
-        ));
-    }
-
-    private function respond($data)
-    {
-        $this->socket->send($data);
-    }
-
-    private function encode($data)
-    {
-        return msgpack_pack($data);
-    }
-
-    private function runMethod($method, $arguments, $methodType)
-    {
-        $callback = $this->getMethodCallback($method, $methodType);
         switch ($methodType) {
             case MessageTypes::REQUEST:
+                array_push($arguments, $request, $headers);
                 try {
-                    $response = call_user_func_array($callback, $arguments);
-                    $response = $this->createResponse(MessageTypes::RESPONSE, $response);
+                    $result = call_user_func_array($callback, $arguments);
+                    $this->createResponse(MessageTypes::RESPONSE, $result, $response, $request);
                 } catch (\Exception $e) {
-                    $response = $this->createResponse(MessageTypes::ERROR, $e);
+                    $this->createResponse(MessageTypes::ERROR, $e, $response, $request);
                 }
-                $this->respond($response);
+                $this->transport->sendResponse($response);
                 break;
 
             case MessageTypes::ONE_WAY_CALL:
-                $response = $this->createResponse(MessageTypes::ONE_WAY_CALL_ACK, null);
-                $this->respond($response);
+                $this->createResponse(MessageTypes::ONE_WAY_CALL_ACK, null, $response, $request);
+                $this->transport->sendResponse($response);
                 call_user_func_array($callback, $arguments);
+
                 break;
 
+            // TODO
             case MessageTypes::PUSH:
+                array_push($arguments, $request, $headers);
                 $self = $this;
                 $ackCalled = false;
-                $ack = function ($response) use ($self, $ackCalled) {
+                $result = null;
+                $ack = function ($result) use ($self, $ackCalled, $response, $request) {
                     if ($ackCalled) {
                         return;
                     }
                     $ackCalled = true;
-                    $response = $self->createResponse(MessageTypes::PUSH_ACK, $response);
-                    $self->respond($response);
+                    $self->createResponse(MessageTypes::PUSH_ACK, $result, $response, $request);
+                    $self->transport->sendResponse($response);
                 };
                 $arguments[] = $ack;
                 try {
-                    $response = call_user_func_array($callback, $arguments);
+                    $result = call_user_func_array($callback, $arguments);
                 } catch (\Exception $e) {
-                    $response = $this->createResponse(MessageTypes::ERROR, $e);
+                    // we cannot send error message when ack was called before that moment
+                    if ($ackCalled) {
+                        throw $e;
+                    }
+                    $this->createResponse(MessageTypes::ERROR, $e, $response, $request);
                 }
-                $ack($response);
+                $ack($result);
                 break;
         }
     }
-
 
     private function getMethodCallback($method, $type)
     {
@@ -190,5 +225,23 @@ class Server implements ServerInterface
             throw new NoSuchMethodException('There is no method "'.$method.'"');
         }
         return $this->methods[$type][$method]->getCallback();
+    }
+
+    private function createResponse($type, $result, Response $response, Request $request = null)
+    {
+        $response->setType($type);
+
+        if ($type === MessageTypes::ONE_WAY_CALL_ACK) {
+            return $response;
+        }
+        $requestHeaders = $request->getHeaders();
+        $response->setResultBody(
+            $this->serializer->serializeResult(
+                $request->getMethodName(),
+                $result,
+                $requestHeaders ? $requestHeaders->get('Content-type') : null
+            )
+        );
+        return $response;
     }
 }

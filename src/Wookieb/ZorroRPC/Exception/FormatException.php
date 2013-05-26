@@ -2,11 +2,11 @@
 namespace Wookieb\ZorroRPC\Exception;
 
 /**
- * Thrown when client receive malformed response
+ * Thrown when client or server receive malformed message
  *
- * @author Wookieb\ZorroRPC\Exception
+ * @author wookieb <wookieb@wp.pl>
  */
-class FormatException extends RPCException
+class FormatException extends TransportException
 {
     public $body;
 

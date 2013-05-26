@@ -2,13 +2,13 @@
 namespace Wookieb\ZorroRPC\Client;
 use Wookieb\ZorroRPC\Exception\ErrorResponseException;
 use Wookieb\ZorroRPC\Exception\FormatException;
-use Wookieb\ZorroRPC\Exception\TimeoutException;
-use Wookieb\ZorroRPC\MessageTypes;
-use Wookieb\ZorroRPC\Exception\RPCException;
-use \ZMQSocket;
-use \ZMQ;
-use \ZMQSocketException;
-use \ZMQContext;
+use Wookieb\ZorroRPC\Serializer\ClientSerializerInterface;
+use Wookieb\ZorroRPC\Transport\ClientTransportInterface;
+use Wookieb\ZorroRPC\Transport\MessageTypes;
+use Wookieb\ZorroRPC\Transport\Response;
+use Wookieb\ZorroRPC\Headers\Headers;
+use Wookieb\ZorroRPC\Transport\Request;
+use Wookieb\ZorroRPC\Headers\Parser;
 
 /**
  * Implementation of ZorroRPC client
@@ -17,54 +17,85 @@ use \ZMQContext;
  */
 class Client implements ClientInterface
 {
-    private $socket;
-
     /**
-     * @param ZMQSocket $socket instance of ZeroMQ REQ socket
+     * @var ClientTransportInterface
      */
-    public function __construct(ZMQSocket $socket)
-    {
-        if ($socket->getSocketType() !== ZMQ::SOCKET_REQ) {
-            throw new \InvalidArgumentException('Invalid zeromq socket type - REQ required');
-        }
-        $this->socket = $socket;
-    }
-
+    private $transport;
     /**
-     * Create client with newly created ZeroMQ socket
-     *
-     * @param string $serverAddress rpc server address
-     * @param int $timeout response timeout
-     * @param ZMQContext $context ZeroMQ context
-     * @return Client
+     * @var ClientSerializerInterface
      */
-    public static function create($serverAddress, $timeout = 5, ZMQContext $context = null)
-    {
-        $context = $context ? $context : new ZMQContext;
-        $socket = $context->getSocket(ZMQ::SOCKET_REQ);
-        $socket->setSockOpt(ZMQ::SOCKOPT_RCVTIMEO, $timeout * 1000);
-        $socket->connect($serverAddress);
+    private $serializer;
+    /**
+     * @var Headers
+     */
+    private $defaultHeaders;
 
-        return new self($socket);
+    private static $validResponseType = array(
+        MessageTypes::REQUEST => MessageTypes::RESPONSE,
+        MessageTypes::ONE_WAY_CALL => MessageTypes::ONE_WAY_CALL_ACK,
+        MessageTypes::PUSH => MessageTypes::PUSH_ACK,
+        MessageTypes::PING => MessageTypes::PONG
+    );
+
+    public function __construct(ClientTransportInterface $transport, ClientSerializerInterface $serializer)
+    {
+        $this->transport = $transport;
+        $this->serializer = $serializer;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function call($method, array $arguments = array())
+    public function setSerializer(ClientSerializerInterface $serializer)
     {
-        $this->send($this->createRequest(MessageTypes::REQUEST, $method, $arguments));
-        $response = $this->parseResponse($this->receive(), MessageTypes::RESPONSE, 'request');
-        return isset($response[1]) ? $response[1] : null;
+        $this->serializer = $serializer;
+        return $this;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function oneWayCall($method, array $arguments = array())
+    public function getSerializer()
     {
-        $this->send($this->createRequest(MessageTypes::ONE_WAY_CALL, $method, $arguments));
-        $this->parseResponse($this->receive(), MessageTypes::ONE_WAY_CALL_ACK, 'one way call');
+        return $this->serializer;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setDefaultHeaders(Headers $headers = null)
+    {
+        $this->defaultHeaders = $headers;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getDefaultHeaders()
+    {
+        return $this->defaultHeaders;
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    public function call($method, array $arguments = array(), Headers $headers = null)
+    {
+        $request = $this->createRequest(MessageTypes::REQUEST, $method, $arguments);
+        $this->send($request);
+        return $this->obtainResponse($this->receive(), $request);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function oneWayCall($method, array $arguments = array(), Headers $headers = null)
+    {
+        $request = $this->createRequest(MessageTypes::ONE_WAY_CALL, $method, $arguments);
+        $this->send($request);
+        $this->obtainResponse($this->receive(), $request);
     }
 
     /**
@@ -72,104 +103,109 @@ class Client implements ClientInterface
      */
     public function ping()
     {
-        $message = $this->createRequest(MessageTypes::PING);
+        $request = $this->createRequest(MessageTypes::PING);
         $start = microtime(true);
-        $this->send($message);
+        $this->send($request);
         $response = $this->receive();
         $responseTime = microtime(true) - $start;
-        $this->parseResponse($response, MessageTypes::PONG, 'ping');
+        $this->obtainResponse($response, $request);
         return $responseTime;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function push($method, array $arguments = array())
+    public function push($method, array $arguments = array(), Headers $headers = null)
     {
-        $this->send($this->createRequest(MessageTypes::PUSH, $method, $arguments));
-        $response = $this->parseResponse($this->receive(), MessageTypes::PUSH_ACK, 'push');
-        return isset($response[1]) ? $response[1] : null;
+        $request = $this->createRequest(MessageTypes::PUSH, $method, $arguments);
+        $this->send($request);
+        return $this->obtainResponse($this->receive(), $request);
     }
 
-    private function createRequest($type, $method = null, $arguments = null)
+    private function createRequest($type, $method = null, $arguments = null, Headers $headers = null)
     {
-        $message = array($type);
+        $request = new Request();
+        $request->setType($type);
+
         if ($method) {
-            $message[1] = $method;
-            $message[2] = $arguments;
+            $computedHeaders = $this->defaultHeaders ? $this->defaultHeaders->getAll() : array();
+            if ($headers) {
+                $computedHeaders = array_merge($computedHeaders, $headers->getAll());
+            }
+
+            $argumentsBody = $this->serializer->serializeArguments(
+                $method,
+                $arguments,
+                @$computedHeaders['content-type']
+            );
+            $request->setHeaders(new Headers($computedHeaders))
+                ->setMethodName($method)
+                ->setArgumentsBody($argumentsBody);
         }
-        return $message;
+        return $request;
     }
 
-
-    private function parseResponse($response, $expectedResponseType, $requestTypeName)
+    /**
+     * @param Response $response
+     * @param Request $request
+     * @return mixed|null
+     * @throws \Wookieb\ZorroRPC\Exception\FormatException
+     */
+    private function obtainResponse(Response $response, Request $request)
     {
-        $this->validateResponse($response);
-        if ($response[0] !== $expectedResponseType) {
-            $msg = 'Unsupported message type in response to "'.$requestTypeName.'" request';
+        // woah, time to handle error
+        if ($response->getType() === MessageTypes::ERROR) {
+            if ($request->getType() === MessageTypes::PING) {
+                throw new FormatException('It is impossible to receive error response on PING requests', $response);
+            }
+            $this->handleError($response, $request);
+        }
+
+        // check whether response type is suitable for request type
+        if ($response->getType() !== self::$validResponseType[$request->getType()]) {
+            $msg = sprintf(
+                'Invalid response type "%s" for request type "%s"',
+                MessageTypes::getName($response->getType()),
+                MessageTypes::getName($request->getType())
+            );
             throw new FormatException($msg, $response);
         }
-        return $response;
+
+        if ($response->getType() === MessageTypes::ONE_WAY_CALL_ACK ||
+            $response->getType() === MessageTypes::PONG
+        ) {
+            return;
+        }
+
+        return $this->serializer->unserializeResult(
+            $request->getMethodName(),
+            $response->getResultBody(),
+            $response->getHeaders()->get('Content-Type')
+        );
     }
 
-    private function validateResponse($response)
+    private function handleError(Response $response, Request $request)
     {
-        if (!is_array($response)) {
-            throw new FormatException('Response must be array', $response);
-        }
+        $responseData = $this->serializer->unserializeResult(
+            $request->getMethodName(),
+            $response->getResultBody(),
+            $response->getHeaders()->get('Content-Type')
+        );
 
-        if (!isset($response[0])) {
-            throw new FormatException('No message type', $response);
+        if ($responseData instanceof \Exception) {
+            throw $responseData;
         }
-
-        if (!MessageTypes::isValid($response[0])) {
-            throw new FormatException('Unsupported message type "'.$response[0].'"', $response);
-        }
-
-        $messageType = $response[0];
-        if ($messageType === MessageTypes::ERROR) {
-            $this->handleErrorResponse($response);
-        }
+        $msg = 'Error caught during execution of method "'.$request->getMethodName().'"';
+        throw new ErrorResponseException($msg, $responseData);
     }
 
-    private function handleErrorResponse($response)
+    private function send(Request $request)
     {
-        if (!isset($response[1])) {
-            throw new FormatException('Error response must contains error', $response);
-        }
-        throw new ErrorResponseException('Error response received', $response[1]);
-    }
-
-    private function send($message)
-    {
-        try {
-            $this->socket->send($this->encode($message));
-        } catch (ZMQSocketException $e) {
-            throw new RPCException('Cannot send request', 0, $e);
-        }
+        $this->transport->sendRequest($request);
     }
 
     private function receive()
     {
-        try {
-            $message = $this->socket->recv();
-        } catch (ZMQSocketException $e) {
-            throw new RPCException('Cannot receive response', 0, $e);
-        }
-
-        if ($message === false) {
-            throw new TimeoutException;
-        }
-        return $this->decode($message);
-    }
-
-    private function encode($data)
-    {
-        return msgpack_pack($data);
-    }
-
-    private function decode($data)
-    {
-        return msgpack_unpack($data);
+        return $this->transport->receiveResponse();
     }
 }

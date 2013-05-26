@@ -3,11 +3,11 @@
 namespace Wookieb\ZorroRPC\Exception;
 
 /**
- * Base for ZorroRPC exceptions
+ * Base for all ZorroRPC exceptions
  *
  * @author wookieb <wookieb@wp.pl>
  */
-class RPCException extends \Exception
+class ZorroRPCException extends \Exception
 {
 
 }
