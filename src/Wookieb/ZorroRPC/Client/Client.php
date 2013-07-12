@@ -133,14 +133,14 @@ class Client implements ClientInterface
                 $computedHeaders = array_merge($computedHeaders, $headers->getAll());
             }
 
-            $argumentsBody = $this->serializer->serializeArguments(
+            $serializedArguments = $this->serializer->serializeArguments(
                 $method,
                 $arguments,
                 @$computedHeaders['content-type']
             );
             $request->setHeaders(new Headers($computedHeaders))
                 ->setMethodName($method)
-                ->setArgumentsBody($argumentsBody);
+                ->setArguments($serializedArguments);
         }
         return $request;
     }

@@ -37,6 +37,10 @@ class Server implements ServerInterface
      */
     private $logger;
 
+    private static $forwardedHeaders = array(
+        'RequestId'
+    );
+
     private static $messageTypeToMethodType = array(
         MessageTypes::ONE_WAY_CALL => MethodTypes::ONE_WAY,
         MessageTypes::REQUEST => MethodTypes::BASIC,
@@ -127,6 +131,8 @@ class Server implements ServerInterface
         try {
             $request = $this->transport->receiveRequest();
             if ($request->getType() === MessageTypes::PING) {
+                $response = new Response(MessageTypes::PONG);
+                $this->forwardHeaders($request, $response);
                 $this->transport->sendResponse(new Response(MessageTypes::PONG));
                 return;
             }
@@ -164,7 +170,7 @@ class Server implements ServerInterface
 
         $arguments = $this->serializer->unserializeArguments(
             $request->getMethodName(),
-            $request->getArgumentsBody(),
+            $request->getArguments(),
             $request->getHeaders()->get('Content-type')
         );
 
@@ -173,7 +179,7 @@ class Server implements ServerInterface
 
         switch ($methodType) {
             case MessageTypes::REQUEST:
-                array_push($arguments, $request, $headers);
+                array_push($arguments, $request, $response->getHeaders());
                 try {
                     $result = call_user_func_array($callback, $arguments);
                     $this->createResponse(MessageTypes::RESPONSE, $result, $response, $request);
@@ -192,7 +198,7 @@ class Server implements ServerInterface
 
             // TODO
             case MessageTypes::PUSH:
-                array_push($arguments, $request, $headers);
+                array_push($arguments, $request, $response->getHeaders());
                 $self = $this;
                 $ackCalled = false;
                 $result = null;
@@ -230,7 +236,7 @@ class Server implements ServerInterface
     private function createResponse($type, $result, Response $response, Request $request = null)
     {
         $response->setType($type);
-
+        $this->forwardHeaders($request, $response);
         if ($type === MessageTypes::ONE_WAY_CALL_ACK) {
             return $response;
         }
@@ -243,5 +249,25 @@ class Server implements ServerInterface
             )
         );
         return $response;
+    }
+
+    private function forwardHeaders(Request $request, Response $response)
+    {
+        $headers = $request->getHeaders();
+        $headersToForward = array();
+        if ($headers) {
+            foreach (self::$forwardedHeaders as $header) {
+                if ($headers->has($header)) {
+                    $headersToForward[$header] = $headers->get($header);
+                }
+            }
+        }
+
+        if ($headersToForward !== array()) {
+            $tmpHeaders = $response->getHeaders() ? $response->getHeaders()->getAll() : array();
+            $response->setHeaders(
+                new Headers(array_merge($tmpHeaders, $headersToForward))
+            );
+        }
     }
 }

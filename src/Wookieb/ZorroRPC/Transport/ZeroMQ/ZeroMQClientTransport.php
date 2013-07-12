@@ -59,10 +59,11 @@ class ZeroMQClientTransport implements ClientTransportInterface
         if ($request->getType() !== MessageTypes::PING) {
             $message[1] = (string)$request->getHeaders();
             $message[2] = $request->getMethodName();
-            $message[3] = $request->getArgumentsBody();
+            foreach ($request->getArguments() as $argument) {
+                $message[] = $argument;
+            }
         }
         try {
-            print_r($message);
             $this->socket->sendMulti($message);
         } catch (\ZMQSocketException $e) {
             throw new TransportException('Cannot send request', 0, $e);

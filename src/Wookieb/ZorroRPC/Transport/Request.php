@@ -10,7 +10,7 @@ use Wookieb\ZorroRPC\Headers\Headers;
 class Request
 {
     private $type;
-    private $argumentsBody;
+    private $arguments;
     private $methodName;
     private $headers;
 
@@ -19,18 +19,18 @@ class Request
      *
      * @return self
      */
-    public function setArgumentsBody($arguments)
+    public function setArguments(array $arguments)
     {
-        $this->argumentsBody = $arguments;
+        $this->arguments = $arguments;
         return $this;
     }
 
     /**
      * @return array
      */
-    public function getArgumentsBody()
+    public function getArguments()
     {
-        return $this->argumentsBody;
+        return $this->arguments;
     }
 
     /**

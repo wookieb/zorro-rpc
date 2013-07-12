@@ -13,12 +13,13 @@ interface ClientSerializerInterface
 {
     /**
      * Serialize arguments for given RPC method name
+     * Method MUST return array of strings.
      *
      * @param string $method
      * @param array $arguments
      * @param string|null $mimeType target mime type, Null if default mime type
      * @throws DataFormatNotFoundException
-     * @return string
+     * @return array of serialized arguments
      */
     function serializeArguments($method, array $arguments, $mimeType = null);
 

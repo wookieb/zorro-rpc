@@ -10,7 +10,12 @@ class SchemalessClientSerializer extends AbstractSerializer implements ClientSer
      */
     public function serializeArguments($method, array $arguments, $mimeType = null)
     {
-        return $this->getDataFormatForMimeType($mimeType)->serialize($arguments);
+        $serialized = array();
+        $dataFormat = $this->getDataFormatForMimeType($mimeType);
+        foreach ($arguments as $argument) {
+            $serialized[] = $dataFormat->serialize($argument);
+        }
+        return $serialized;
     }
 
     /**
