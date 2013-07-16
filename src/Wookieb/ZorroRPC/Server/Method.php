@@ -53,4 +53,9 @@ class Method
         return $this->type;
     }
 
+    public function __invoke()
+    {
+        $args = func_get_args();
+        return call_user_func_array($this->callback, $args);
+    }
 }

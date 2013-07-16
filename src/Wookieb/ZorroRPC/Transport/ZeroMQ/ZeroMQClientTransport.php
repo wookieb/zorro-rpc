@@ -20,20 +20,26 @@ use Wookieb\ZorroRPC\Headers\Headers;
 
 class ZeroMQClientTransport implements ClientTransportInterface
 {
-
     /**
      * @var \ZMQSocket
      */
     private $socket;
 
-    public function __construct(\ZMQSocket $socket, $timeout = 1)
+    public function __construct($servers, $timeout = 1)
     {
-        if ($socket->getSocketType() !== \ZMQ::SOCKET_REQ) {
-            throw new \InvalidArgumentException('REQ socket required');
-        }
-        $this->socket = $socket;
-        $this->socket->setSockOpt(\ZMQ::SOCKOPT_LINGER, 0);
+        $servers = (array)$servers;
+        $this->socket = $this->createSocket($servers);
         $this->setTimeout($timeout);
+    }
+
+    protected function createSocket(array $servers)
+    {
+        $socket = new \ZMQSocket(new \ZMQContext, \ZMQ::SOCKET_REQ);
+        $socket->setSockOpt(\ZMQ::SOCKOPT_LINGER, 0);
+        foreach ($servers as $server) {
+            $socket->connect($server);
+        }
+        return $socket;
     }
 
     public function setTimeout($timeout)
@@ -53,16 +59,17 @@ class ZeroMQClientTransport implements ClientTransportInterface
     public function sendRequest(Request $request)
     {
         $message = array(
-            $request->getType()
+            $request->getType(),
+            (string)$request->getHeaders()
         );
 
         if ($request->getType() !== MessageTypes::PING) {
-            $message[1] = (string)$request->getHeaders();
-            $message[2] = $request->getMethodName();
-            $message[3] = $request->getArgumentsBody();
+            $message[] = $request->getMethodName();
+            foreach ($request->getArgumentsBody() as $argument) {
+                $message[] = $argument;
+            }
         }
         try {
-            print_r($message);
             $this->socket->sendMulti($message);
         } catch (\ZMQSocketException $e) {
             throw new TransportException('Cannot send request', 0, $e);
@@ -81,7 +88,7 @@ class ZeroMQClientTransport implements ClientTransportInterface
         }
 
         if ($result === false) {
-            throw new TimeoutException('Timeout ('.$this->getTimeout().'s) reached');
+            throw new TimeoutException('Timeout (' . $this->getTimeout() . 's) reached');
         }
 
         if (!isset($result[0])) {
@@ -90,9 +97,6 @@ class ZeroMQClientTransport implements ClientTransportInterface
         $response = new Response();
         $response->setType((int)$result[0]);
 
-        if ($response->getType() === MessageTypes::PONG) {
-            return $response;
-        }
 
         if (!isset($result[1])) {
             throw new FormatException('Invalid response - no headers', $result);
@@ -102,9 +106,10 @@ class ZeroMQClientTransport implements ClientTransportInterface
             new Headers(Parser::parseHeaders($result[1]))
         );
 
-        if ($response->getType() === MessageTypes::ONE_WAY_CALL_ACK) {
+        if ($response->getType() === MessageTypes::ONE_WAY_CALL_ACK || $response->getType() === MessageTypes::PONG) {
             return $response;
         }
+
         if (!isset($result[2])) {
             throw new FormatException('Invalid response - no response body', $result);
         }

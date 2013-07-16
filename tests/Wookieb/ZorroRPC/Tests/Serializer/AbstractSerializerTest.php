@@ -36,15 +36,24 @@ class AbstractSerializerTest extends \PHPUnit_Framework_TestCase
         ));
         $result = $this->object->registerDataFormat($dataFormat);
         $this->assertSame($this->object, $result, 'Method chaining violation at "registerDataFormat"');
-
         $this->assertSame($dataFormat, $this->object->getDataFormatForMimeType('text/xml'));
+    }
+
+    public function testRegisterDataFormatShouldThrowExceptionWhenDataFormatDoesNotDefineMimeTypes()
+    {
+        $dataFormat = $this->getMockForAbstractClass('Wookieb\ZorroRPC\Serializer\DataFormat\DataFormatInterface');
+        $dataFormat->expects($this->any())
+            ->method('getMimeTypes')
+            ->will($this->returnValue(null));
+
+        $this->setExpectedException('\UnexpectedValueException', 'must returns array of supported mime types');
+        $this->object->registerDataFormat($dataFormat);
     }
 
     public function testRegisterDataFormatShouldThrowExceptionWhenDataFormatNotFoundForGivenDataFormat()
     {
         $msg = 'No data format defined for mime type "application/msgpack"';
         $this->setExpectedException('Wookieb\ZorroRPC\Exception\DataFormatNotFoundException', $msg);
-
         $this->object->getDataFormatForMimeType('application/msgpack');
     }
 
@@ -75,7 +84,6 @@ class AbstractSerializerTest extends \PHPUnit_Framework_TestCase
         $result = $this->object->setDefaultDataFormat($dataFormat);
 
         $this->assertSame($this->object, $result, 'Method chaining violation at "setDefaultDataFormat"');
-
         $this->assertSame($dataFormat, $this->object->getDefaultDataFormat());
         $this->assertSame('application/json', $this->object->getDefaultMimeType());
     }

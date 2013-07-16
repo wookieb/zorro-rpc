@@ -18,6 +18,8 @@ interface ClientInterface
      *
      * @param string $method
      * @param array $arguments
+     * @param Headers $headers request headers
+     *
      * @return mixed response from remote server
      *
      * @throws ErrorResponseException when something goes wrong on the remote server side
@@ -31,6 +33,7 @@ interface ClientInterface
      *
      * @param string $method
      * @param array $arguments
+     * @param Headers $headers request headers
      *
      * @throws TimeoutException when timeout occurs :)
      * @throws FormatException when response from server is malformed
@@ -55,6 +58,7 @@ interface ClientInterface
      *
      * @param string $method
      * @param array $arguments
+     * @param Headers $headers request headers
      * @return mixed
      *
      * @throws ErrorResponseException when something goes wrong on the remote server side
@@ -64,7 +68,7 @@ interface ClientInterface
     function push($method, array $arguments = array(), Headers $headers = null);
 
     /**
-     * Set default request headers
+     * Set default request headers that will be send in each request
      *
      * @param Headers $headers
      * @return self

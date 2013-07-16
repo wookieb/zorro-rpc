@@ -10,16 +10,34 @@ use Wookieb\ZorroRPC\Headers\Headers;
 class Request
 {
     private $type;
-    private $argumentsBody;
+    private $argumentsBody = array();
     private $methodName;
     private $headers;
+
+    public function __construct($type = null, $method = null, array $arguments = null, Headers $headers = null)
+    {
+        if ($type) {
+            $this->setType($type);
+        }
+        if ($method) {
+            $this->setMethodName($method);
+        }
+        if ($arguments) {
+            $this->setArgumentsBody($arguments);
+        }
+        if ($headers) {
+            $this->setHeaders($headers);
+        } else {
+            $this->setHeaders(new Headers());
+        }
+    }
 
     /**
      * @param array $arguments
      *
      * @return self
      */
-    public function setArgumentsBody($arguments)
+    public function setArgumentsBody(array $arguments)
     {
         $this->argumentsBody = $arguments;
         return $this;

@@ -10,22 +10,29 @@ use Wookieb\ZorroRPC\Headers\Headers;
  *
  * @author wookieb <wookieb@wp.pl>
  */
-interface ServerInterface extends LoggerAwareInterface
+interface ServerInterface
 {
 
     /**
      * Set default headers for all responses
      *
      * @param Headers $headers
-     * @return mixed
+     * @return self
      */
     function setDefaultHeaders(Headers $headers);
+
+    /**
+     * Set list of names of forwarded headers from request to response
+     *
+     * @param array $headers
+     * @return self
+     */
+    function setForwardedHeaders(array $headers);
 
     /**
      * Runs ZorroRPC server in infinity loop
      */
     function run();
-
 
     /**
      * Handle only one request
@@ -52,6 +59,23 @@ interface ServerInterface extends LoggerAwareInterface
      * @throws \InvalidArgumentException when of elements of array is not instance of Method
      */
     function registerMethods(array $methods);
+
+    /**
+     * Return list of registered RPC methods
+     *
+     * @return array
+     */
+    function getMethods();
+
+    /**
+     * Set callback that will be called when internal server error occurs
+     *
+     * @param callback $callback
+     * @throws \InvalidArgumentException
+     *
+     * @return self
+     */
+    function setOnErrorCallback($callback);
 
     /**
      * Set serializer aggregator which contains list of serializers and default serializer

@@ -12,9 +12,10 @@ class SchemalessServerSerializer extends AbstractSerializer implements ServerSer
     /**
      * {@inheritDoc}
      */
-    public function unserializeArguments($method, $argumentsBody, $mimeType = null)
+    public function unserializeArguments($method, array $arguments, $mimeType = null)
     {
-        return (array)$this->getDataFormatForMimeType($mimeType)->unserialize($argumentsBody);
+        $dataFormat = $this->getDataFormatForMimeType($mimeType);
+        return array_map(array($dataFormat, 'unserialize'), $arguments);
     }
 
     /**

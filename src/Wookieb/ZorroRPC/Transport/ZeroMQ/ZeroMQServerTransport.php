@@ -23,14 +23,20 @@ class ZeroMQServerTransport implements ServerTransportInterface
 
     private $waitingForResponse = false;
 
-    public function __construct(\ZMQSocket $socket)
+    public function __construct($addresses)
     {
-        if ($socket->getSocketType() !== \ZMQ::SOCKET_REP) {
-            throw new \InvalidArgumentException('REP socket required');
-        }
-        $this->socket = $socket;
+        $addresses = (array)$addresses;
+        $this->socket = $this->createSocket($addresses);
     }
 
+    protected function createSocket(array $addresses)
+    {
+        $socket = new \ZMQSocket(new \ZMQContext(), \ZMQ::SOCKET_REP);
+        foreach ($addresses as $address) {
+            $socket->bind($address);
+        }
+        return $socket;
+    }
 
     /**
      * {@inheritDoc}
@@ -41,7 +47,7 @@ class ZeroMQServerTransport implements ServerTransportInterface
         $this->waitingForResponse = true;
         $requestType = (int)$message[0];
         if (!MessageTypes::isValid($requestType)) {
-            throw new FormatException('Invalid request type "'.$requestType.'"', $message);
+            throw new FormatException('Invalid request type "' . $requestType . '"', $message);
         }
 
         $request = new Request();
@@ -52,7 +58,8 @@ class ZeroMQServerTransport implements ServerTransportInterface
                 throw new FormatException('Method name is empty', $message);
             }
             $request->setMethodName($message[2]);
-            $request->setArgumentsBody(@$message[3]);
+            $arguments = array_slice($request, 3);
+            $request->setArgumentsBody($arguments);
         }
         return $request;
     }

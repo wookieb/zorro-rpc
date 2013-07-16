@@ -1,22 +1,21 @@
 {
-  "name": "wookieb/zorro-rpc",
-  "license": "MIT",
-  "authors": [
-    {
-      "name": "wookieb",
-      "email": "wookieb@wp.pl"
+    "name": "wookieb/zorro-rpc",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "wookieb",
+            "email": "wookieb@wp.pl"
+        }
+    ],
+    "require": {
+        "ext-zmq": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "3.7.*"
+    },
+    "autoload": {
+        "psr-0": {
+            "Wookieb\\ZorroRPC": "src"
+        }
     }
-  ],
-  "require": {
-    "ext-zmq": "*",
-    "monolog/monolog": "1.*"
-  },
-  "require-dev": {
-    "phpunit/phpunit": "3.7.*"
-  },
-  "autoload": {
-    "psr-0": {
-      "Wookieb\\ZorroRPC": "src"
-    }
-  }
 }

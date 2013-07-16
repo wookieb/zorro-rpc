@@ -69,7 +69,7 @@ abstract class AbstractSerializer
     {
         $mimeTypes = $dataFormat->getMimeTypes();
         if (!is_array($mimeTypes) || $mimeTypes === array()) {
-            throw new \UnexpectedValueException('Serializer must returns array of supported mime types');
+            throw new \UnexpectedValueException('Data format must returns array of supported mime types');
         }
     }
 
@@ -88,7 +88,7 @@ abstract class AbstractSerializer
             throw new DataFormatNotFoundException('Default data format not defined');
         }
         if (!isset($this->serializers[$mimeType])) {
-            throw new DataFormatNotFoundException('No data format defined for mime type "'.$mimeType.'"');
+            throw new DataFormatNotFoundException('No data format defined for mime type "' . $mimeType . '"');
         }
         return $this->serializers[$mimeType];
     }

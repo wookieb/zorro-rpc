@@ -14,14 +14,14 @@ interface ServerSerializerInterface
     /**
      * Unserialize arguments body for given RPC method name
      *
-     * @param $method
-     * @param $argumentsBody
+     * @param string $method
+     * @param array $arguments
      * @param string|null $mimeType target mime type. Null if default mime type
      * @throws DataFormatNotFoundException
      * @throws SerializationException
      * @return array
      */
-    function unserializeArguments($method, $argumentsBody, $mimeType = null);
+    function unserializeArguments($method, array $arguments, $mimeType = null);
 
     /**
      * Serialize response for given RPC method name

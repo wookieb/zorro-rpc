@@ -128,19 +128,21 @@ class Client implements ClientInterface
         $request->setType($type);
 
         if ($method) {
-            $computedHeaders = $this->defaultHeaders ? $this->defaultHeaders->getAll() : array();
-            if ($headers) {
-                $computedHeaders = array_merge($computedHeaders, $headers->getAll());
+            $requestHeaders = new Headers($this->defaultHeaders->getAll());
+            foreach ($headers as $headerName => $headerValue) {
+                $requestHeaders->set($headerName, $headerValue);
             }
 
-            $argumentsBody = $this->serializer->serializeArguments(
+            $contentType = $requestHeaders->get('content-type');
+            $arguments = $this->serializer->serializeArguments(
                 $method,
                 $arguments,
-                @$computedHeaders['content-type']
+                $contentType
             );
-            $request->setHeaders(new Headers($computedHeaders))
+
+            $request->setHeaders($requestHeaders)
                 ->setMethodName($method)
-                ->setArgumentsBody($argumentsBody);
+                ->setArgumentsBody($arguments);
         }
         return $request;
     }
@@ -195,7 +197,7 @@ class Client implements ClientInterface
         if ($responseData instanceof \Exception) {
             throw $responseData;
         }
-        $msg = 'Error caught during execution of method "'.$request->getMethodName().'"';
+        $msg = 'Error caught during execution of method "' . $request->getMethodName() . '"';
         throw new ErrorResponseException($msg, $responseData);
     }
 

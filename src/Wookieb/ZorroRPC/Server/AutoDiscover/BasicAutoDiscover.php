@@ -21,6 +21,8 @@ class BasicAutoDiscover implements AutoDiscoverInterface
 
     /**
      * @param object $object
+     *
+     * @throws \InvalidArgumentException when argument is not an object
      */
     public function __construct($object)
     {

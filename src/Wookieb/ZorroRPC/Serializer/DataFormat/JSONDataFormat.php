@@ -46,7 +46,7 @@ class JSONDataFormat implements DataFormatInterface
                 if (method_exists($data, '__sleep')) {
                     $keysToSerialize = $data->__sleep();
                     if (!is_array($keysToSerialize)) {
-                        $msg = 'Invalid data type returned from method __sleep of object class '.get_class($data).'.';
+                        $msg = 'Invalid data type returned from method __sleep from object of class ' . get_class($data) . '.';
                         $msg .= '__sleep must return array of keys to serialize.';
                         throw new SerializationException($msg);
                     }

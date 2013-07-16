@@ -11,6 +11,7 @@ use Wookieb\ZorroRPC\Exception\DataFormatNotFoundException;
  */
 interface ClientSerializerInterface
 {
+    // change to serialize Arguments
     /**
      * Serialize arguments for given RPC method name
      *

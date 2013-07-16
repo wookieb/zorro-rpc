@@ -1,6 +1,5 @@
 <?php
 namespace Wookieb\ZorroRPC\Server;
-use Psr\Log\LoggerAwareInterface;
 use Wookieb\ZorroRPC\Exception\ServerException;
 use Wookieb\ZorroRPC\Serializer\ServerSerializerInterface;
 use Wookieb\ZorroRPC\Transport\MessageTypes;
@@ -9,7 +8,6 @@ use Wookieb\ZorroRPC\Transport\Response;
 use Wookieb\ZorroRPC\Transport\Request;
 use Wookieb\ZorroRPC\Exception\NoSuchMethodException;
 use Wookieb\ZorroRPC\Headers\Headers;
-use Psr\Log\LoggerInterface;
 
 /**
  * Basic implementation of ZorroRPC server
@@ -30,12 +28,29 @@ class Server implements ServerInterface
      */
     private $transport;
 
+    /**
+     * @var \Wookieb\ZorroRPC\Headers\Headers
+     */
     private $headers;
 
     /**
-     * @var LoggerInterface
+     * List of names of headers that should be forwarded to response always when they exists in response
+     *
+     * @var array
      */
-    private $logger;
+    private $forwardedHeaders = array();
+
+    /**
+     * @var callback
+     */
+    private $onErrorCallback;
+
+    /**
+     * List of names of headers that MUST be forwarded regardless of list of forwarded headers provided by user
+     *
+     * @var array
+     */
+    private static $requiredForwardedHeaders = array('request-id');
 
     private static $messageTypeToMethodType = array(
         MessageTypes::ONE_WAY_CALL => MethodTypes::ONE_WAY,
@@ -49,15 +64,6 @@ class Server implements ServerInterface
         $this->setSerializer($serializer);
 
         $this->headers = new Headers();
-    }
-
-    /**
-     * @return self
-     */
-    public function setLogger(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
-        return $this;
     }
 
     /**
@@ -80,12 +86,49 @@ class Server implements ServerInterface
     /**
      * {@inheritDoc}
      */
-    function setDefaultHeaders(Headers $headers)
+    public function setDefaultHeaders(Headers $headers)
     {
         $this->headers = $headers;
         return $this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public function setForwardedHeaders(array $headers)
+    {
+        $this->forwardedHeaders = array_merge($headers, self::$requiredForwardedHeaders);
+        $this->forwardedHeaders = array_unique($this->forwardedHeaders);
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getForwardedHeaders()
+    {
+        return $this->forwardedHeaders;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setOnErrorCallback($callback)
+    {
+        if (!is_callable($callback, true)) {
+            throw new \InvalidArgumentException('Argument must be a callback');
+        }
+        $this->onErrorCallback = $callback;
+        return $this;
+    }
+
+    /**
+     * @return callable
+     */
+    public function getOnErrorCallback()
+    {
+        return $this->onErrorCallback;
+    }
 
     /**
      * {@inheritDoc}
@@ -110,6 +153,15 @@ class Server implements ServerInterface
             }
             $this->registerMethod($method);
         }
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getMethods()
+    {
+        return array_values(call_user_func_array('array_merge', $this->methods));
     }
 
     /**
@@ -127,21 +179,17 @@ class Server implements ServerInterface
         try {
             $request = $this->transport->receiveRequest();
             if ($request->getType() === MessageTypes::PING) {
-                $this->transport->sendResponse(new Response(MessageTypes::PONG));
+                $response = $this->createResponse(MessageTypes::PONG, null, new Response(), $request);
+                $this->transport->sendResponse($response);
                 return;
             }
             $this->runMethodForRequest($request);
         } catch (\Exception $e) {
-
             $exception = new ServerException(
-                'Server error: '.$e->getMessage(),
+                'Server error: ' . $e->getMessage(),
                 $this->transport->isWaitingForResponse(),
                 $e
             );
-
-            if ($this->logger) {
-                $this->logger->error($exception);
-            }
 
             if ($this->transport->isWaitingForResponse()) {
                 $request = new Request();
@@ -152,9 +200,23 @@ class Server implements ServerInterface
                 $this->createResponse(MessageTypes::ERROR, $exception, $response, $request);
 
                 $this->transport->sendResponse($response);
+            } else if ($this->onErrorCallback) {
+                call_user_func($this->onErrorCallback, $exception);
             }
-
         }
+    }
+
+    private function forwardHeaders(Request $request, Response $response)
+    {
+        $requestHeaders = $request->getHeaders();
+        $responseHeaders = $response->getHeaders();
+        foreach ($this->forwardedHeaders as $header) {
+            $headerValue = $requestHeaders->get($header);
+            if ($headerValue) {
+                $responseHeaders->set($header, $headerValue);
+            }
+        }
+        return $response;
     }
 
     private function runMethodForRequest(Request $request)
@@ -162,14 +224,11 @@ class Server implements ServerInterface
         $methodType = self::$messageTypeToMethodType[$request->getType()];
         $callback = $this->getMethodCallback($request->getMethodName(), $methodType);
 
-        $arguments = $this->serializer->unserializeArguments(
-            $request->getMethodName(),
-            $request->getArgumentsBody(),
-            $request->getHeaders()->get('Content-type')
-        );
+        $arguments = $this->serializer->unserializeArguments($request->getMethodName(), $request->getArgumentsBody());
 
         $response = new Response();
-        $response->setHeaders(clone $this->headers);
+        $headers = clone $this->headers;
+        $response->setHeaders($headers);
 
         switch ($methodType) {
             case MessageTypes::REQUEST:
@@ -184,13 +243,12 @@ class Server implements ServerInterface
                 break;
 
             case MessageTypes::ONE_WAY_CALL:
+                array_push($arguments, $request);
                 $this->createResponse(MessageTypes::ONE_WAY_CALL_ACK, null, $response, $request);
                 $this->transport->sendResponse($response);
                 call_user_func_array($callback, $arguments);
-
                 break;
 
-            // TODO
             case MessageTypes::PUSH:
                 array_push($arguments, $request, $headers);
                 $self = $this;
@@ -222,18 +280,21 @@ class Server implements ServerInterface
     private function getMethodCallback($method, $type)
     {
         if (!isset($this->methods[$type][$method])) {
-            throw new NoSuchMethodException('There is no method "'.$method.'"');
+            throw new NoSuchMethodException('There is no method "' . $method . '"');
         }
-        return $this->methods[$type][$method]->getCallback();
+        return $this->methods[$type][$method];
     }
 
-    private function createResponse($type, $result, Response $response, Request $request = null)
+    private function createResponse($type, $result, Response $response, Request $request)
     {
         $response->setType($type);
+        $this->forwardHeaders($request, $response);
 
-        if ($type === MessageTypes::ONE_WAY_CALL_ACK) {
+        // response for ONE_WAY_CALL method does not contains response
+        if ($type === MessageTypes::ONE_WAY_CALL_ACK || $type === MessageTypes::PONG) {
             return $response;
         }
+
         $requestHeaders = $request->getHeaders();
         $response->setResultBody(
             $this->serializer->serializeResult(
