@@ -13,10 +13,13 @@ class Response
     private $headers;
     private $resultBody;
 
-    public function __construct($type = null, Headers $headers = null)
+    public function __construct($type = null, $result = null, Headers $headers = null)
     {
         if ($type) {
             $this->setType($type);
+        }
+        if ($result !== null) {
+            $this->setResultBody($result);
         }
         if (!$headers) {
             $headers = new Headers();

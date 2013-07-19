@@ -31,15 +31,15 @@ class SchemalessClientSerializerTest extends \PHPUnit_Framework_TestCase
 
     public function testShouldForwardArgumentToDataFormat()
     {
-        $argument = 'some argument';
-        $argumentString = 'some argument string';
+        $arguments = array('some argument');
+        $argumentsString = array('some argument string');
         $this->dataFormat->expects($this->once())
             ->method('serialize')
-            ->with($this->equalTo($argument))
-            ->will($this->returnValue($argumentString));
+            ->with($this->equalTo($arguments[0]))
+            ->will($this->returnValue($argumentsString[0]));
 
-        $result = $this->object->serializeArgument('some method', $argument);
-        $this->assertSame($argumentString, $result);
+        $result = $this->object->serializeArguments('some method', $arguments);
+        $this->assertSame($argumentsString, $result);
     }
 
     public function testShouldForwardResultStringToDataFormat()

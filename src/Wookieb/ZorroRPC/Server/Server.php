@@ -179,18 +179,18 @@ class Server implements ServerInterface
         try {
             $request = $this->transport->receiveRequest();
             if ($request->getType() === MessageTypes::PING) {
-                $response = $this->createResponse(MessageTypes::PONG, null, new Response(), $request);
+                $response = $this->createResponse(
+                    MessageTypes::PONG,
+                    null,
+                    new Response(null, null, clone $this->headers),
+                    $request
+                );
+
                 $this->transport->sendResponse($response);
                 return;
             }
             $this->runMethodForRequest($request);
-        } catch (\Exception $e) {
-            $exception = new ServerException(
-                'Server error: ' . $e->getMessage(),
-                $this->transport->isWaitingForResponse(),
-                $e
-            );
-
+        } catch (\Exception $exception) {
             if ($this->transport->isWaitingForResponse()) {
                 $request = new Request();
                 $request->setMethodName('')
@@ -222,19 +222,22 @@ class Server implements ServerInterface
     private function runMethodForRequest(Request $request)
     {
         $methodType = self::$messageTypeToMethodType[$request->getType()];
-        $callback = $this->getMethodCallback($request->getMethodName(), $methodType);
+        $method = $this->getMethod($request->getMethodName(), $methodType);
 
-        $arguments = $this->serializer->unserializeArguments($request->getMethodName(), $request->getArgumentsBody());
+        $arguments = $this->serializer->unserializeArguments(
+            $request->getMethodName(),
+            $request->getArgumentsBody(),
+            $request->getHeaders()->get('content-type')
+        );
 
         $response = new Response();
         $headers = clone $this->headers;
         $response->setHeaders($headers);
 
         switch ($methodType) {
-            case MessageTypes::REQUEST:
-                array_push($arguments, $request, $headers);
+            case MethodTypes::BASIC:
                 try {
-                    $result = call_user_func_array($callback, $arguments);
+                    $result = $method->call($arguments, $request, $headers);
                     $this->createResponse(MessageTypes::RESPONSE, $result, $response, $request);
                 } catch (\Exception $e) {
                     $this->createResponse(MessageTypes::ERROR, $e, $response, $request);
@@ -242,19 +245,17 @@ class Server implements ServerInterface
                 $this->transport->sendResponse($response);
                 break;
 
-            case MessageTypes::ONE_WAY_CALL:
-                array_push($arguments, $request);
+            case MethodTypes::ONE_WAY:
                 $this->createResponse(MessageTypes::ONE_WAY_CALL_ACK, null, $response, $request);
                 $this->transport->sendResponse($response);
-                call_user_func_array($callback, $arguments);
+                $method->call($arguments, $request);
                 break;
 
-            case MessageTypes::PUSH:
-                array_push($arguments, $request, $headers);
+            case MethodTypes::PUSH:
                 $self = $this;
                 $ackCalled = false;
                 $result = null;
-                $ack = function ($result) use ($self, $ackCalled, $response, $request) {
+                $ack = function ($result = null) use ($self, &$ackCalled, $response, $request) {
                     if ($ackCalled) {
                         return;
                     }
@@ -262,22 +263,29 @@ class Server implements ServerInterface
                     $self->createResponse(MessageTypes::PUSH_ACK, $result, $response, $request);
                     $self->transport->sendResponse($response);
                 };
-                $arguments[] = $ack;
                 try {
-                    $result = call_user_func_array($callback, $arguments);
+                    $result = $method->call($arguments, $request, $headers, $ack);
                 } catch (\Exception $e) {
                     // we cannot send error message when ack was called before that moment
                     if ($ackCalled) {
                         throw $e;
                     }
+                    $ackCalled = true;
                     $this->createResponse(MessageTypes::ERROR, $e, $response, $request);
+                    $self->transport->sendResponse($response);
                 }
                 $ack($result);
                 break;
         }
     }
 
-    private function getMethodCallback($method, $type)
+    /**
+     * @param string $method method name
+     * @param integer $type method type
+     * @return Method
+     * @throws \Wookieb\ZorroRPC\Exception\NoSuchMethodException
+     */
+    private function getMethod($method, $type)
     {
         if (!isset($this->methods[$type][$method])) {
             throw new NoSuchMethodException('There is no method "' . $method . '"');
@@ -290,17 +298,15 @@ class Server implements ServerInterface
         $response->setType($type);
         $this->forwardHeaders($request, $response);
 
-        // response for ONE_WAY_CALL method does not contains response
         if ($type === MessageTypes::ONE_WAY_CALL_ACK || $type === MessageTypes::PONG) {
             return $response;
         }
 
-        $requestHeaders = $request->getHeaders();
         $response->setResultBody(
             $this->serializer->serializeResult(
                 $request->getMethodName(),
                 $result,
-                $requestHeaders ? $requestHeaders->get('Content-type') : null
+                $response->getHeaders()->get('content-type')
             )
         );
         return $response;
