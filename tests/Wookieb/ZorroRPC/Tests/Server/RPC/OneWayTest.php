@@ -117,15 +117,16 @@ class OneWayTest extends RPCBase
         $request = new Request(MessageTypes::ONE_WAY_CALL, 'owcWithDefaults', array('zia'));
         $this->useRequest($request);
 
-        $this->object->registerMethod('owcWithDefaults', function ($arg1, $arg2 = 1, $arg3 = 2) {
+        $test = $this;
+        $this->object->registerMethod('owcWithDefaults', function ($arg1, $arg2 = 1, $arg3 = 2) use ($test) {
             $request = func_get_arg(4);
             $headers = func_get_arg(5);
 
-            $this->assertEquals('zia', $arg1);
-            $this->assertEquals(1, $arg2);
-            $this->assertEquals(2, $arg3);
-            $this->assertInstanceOf('Wookieb\ZorroRPC\Transport\Request', $request);
-            $this->assertNull($headers);
+            $test->assertEquals('zia', $arg1);
+            $test->assertEquals(1, $arg2);
+            $test->assertEquals(2, $arg3);
+            $test->assertInstanceOf('Wookieb\ZorroRPC\Transport\Request', $request);
+            $test->assertNull($headers);
 
             return 'OK';
         }, MethodTypes::ONE_WAY);
