@@ -24,13 +24,14 @@ class PushTest extends RPCBase
         $request = new Request(MessageTypes::PUSH, 'push', array(1));
         $this->useRequest($request);
 
+        $test = $this;
         $this->rpcTarget->expects($this->once())
             ->method('push')
-            ->will($this->returnCallback(function () {
-                $this->assertSame(1, func_get_arg(0));
-                $this->assertInstanceOf('\Closure', func_get_arg(1));
-                $this->assertInstanceOf('Wookieb\ZorroRPC\Transport\Request', func_get_arg(2));
-                $this->assertInstanceOf('Wookieb\ZorroRPC\Headers\Headers', func_get_arg(3));
+            ->will($this->returnCallback(function () use ($test) {
+                $test->assertSame(1, func_get_arg(0));
+                $test->assertInstanceOf('\Closure', func_get_arg(1));
+                $test->assertInstanceOf('Wookieb\ZorroRPC\Transport\Request', func_get_arg(2));
+                $test->assertInstanceOf('Wookieb\ZorroRPC\Headers\Headers', func_get_arg(3));
             }));
 
         $response = new Response(MessageTypes::PUSH_ACK, '');
