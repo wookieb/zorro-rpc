@@ -66,7 +66,7 @@ class RPCBase extends \PHPUnit_Framework_TestCase
 
     protected function useResponse(Request $request, Response $response)
     {
-        if ($request->getType() === MessageTypes::PING) {
+        if ($request->getType() === MessageTypes::PING || $request->getType() === MessageTypes::ONE_WAY_CALL) {
             $this->serializer->expects($this->never())
                 ->method('serializeResult');
         } else {
