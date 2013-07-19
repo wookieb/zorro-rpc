@@ -2,18 +2,11 @@ language: php
 
 php:
  - 5.4
+ - 5.3
 
 branches:
   only:
     - master
 
 before_script:
- - git clone https://github.com/msgpack/msgpack-php.git
- - cd msgpack-php
- - phpize
- - ./configure && make && make install
- - phpenv rehash
- - echo "extension=msgpack.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
- - cd ..
- - phpenv config-add php.ini
  - composer install
