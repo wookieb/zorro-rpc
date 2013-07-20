@@ -55,7 +55,7 @@ class MethodTest extends \PHPUnit_Framework_TestCase
             $test->assertSame(2, $arg1);
             $test->assertSame(1, $arg2);
             $test->assertSame($request, func_get_arg(2));
-            $this->assertSame($headers, func_get_arg(3));
+            $test->assertSame($headers, func_get_arg(3));
             $called = true;
         });
 
@@ -84,7 +84,7 @@ class MethodTest extends \PHPUnit_Framework_TestCase
             $test->assertSame(1, $arg2);
             $test->assertInstanceOf('\Closure', func_get_arg(2));
             $test->assertSame($request, func_get_arg(3));
-            $this->assertSame($headers, func_get_arg(4));
+            $test->assertSame($headers, func_get_arg(4));
             $called = true;
 
         }, MethodTypes::PUSH);
@@ -111,7 +111,7 @@ class MethodTest extends \PHPUnit_Framework_TestCase
         $method = new Method('name', function ($arg1, Request $arg, Headers $headers = null) use ($test, $request, &$called) {
             $test->assertSame(2, $arg1);
             $test->assertSame($request, func_get_arg(1));
-            $this->assertNull($headers);
+            $test->assertNull($headers);
             $called = true;
         }, MethodTypes::ONE_WAY);
 
