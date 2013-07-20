@@ -255,16 +255,23 @@ class Server implements ServerInterface
                 $self = $this;
                 $ackCalled = false;
                 $result = null;
-                $ack = function ($result = null) use ($self, &$ackCalled, $response, $request) {
+                $transport = $this->transport;
+
+                // hack for php 5.3 which makes "createResponse" accessible from closure
+                $create = new \ReflectionMethod($this, 'createResponse');
+                $create->setAccessible(true);
+
+                $ack = function ($result = null) use ($self, &$ackCalled, $response, $request, $transport, $create) {
                     if ($ackCalled) {
                         return;
                     }
                     $ackCalled = true;
-                    $self->createResponse(MessageTypes::PUSH_ACK, $result, $response, $request);
-                    $self->transport->sendResponse($response);
+                    $create->invoke($self, MessageTypes::PUSH_ACK, $result, $response, $request);
+                    $transport->sendResponse($response);
                 };
                 try {
                     $result = $method->call($arguments, $request, $headers, $ack);
+                    $ack($result);
                 } catch (\Exception $e) {
                     // we cannot send error message when ack was called before that moment
                     if ($ackCalled) {
@@ -274,7 +281,7 @@ class Server implements ServerInterface
                     $this->createResponse(MessageTypes::ERROR, $e, $response, $request);
                     $self->transport->sendResponse($response);
                 }
-                $ack($result);
+
                 break;
         }
     }
@@ -288,7 +295,7 @@ class Server implements ServerInterface
     private function getMethod($method, $type)
     {
         if (!isset($this->methods[$type][$method])) {
-            throw new NoSuchMethodException('There is no method "' . $method . '"');
+            throw new NoSuchMethodException('There is no method "'.$method.'"');
         }
         return $this->methods[$type][$method];
     }

@@ -1,7 +1,7 @@
 <?php
 
 namespace Wookieb\ZorroRPC\Tests\Server\RPC;
-require_once __DIR__ . '/RPCBase.php';
+require_once __DIR__.'/RPCBase.php';
 
 use Wookieb\ZorroRPC\Server\MethodTypes;
 use Wookieb\ZorroRPC\Transport\MessageTypes;
@@ -265,6 +265,30 @@ class PushTest extends RPCBase
             $test->assertInstanceOf('Wookieb\ZorroRPC\Headers\Headers', $headers);
 
             return 'OK';
+        }, MethodTypes::PUSH);
+
+        $response = new Response(MessageTypes::PUSH_ACK, 'OK');
+
+        $this->useResponse($request, $response);
+        $this->object->handleCall();
+    }
+
+    public function testWhenCallbackIsCalledThenResponseShouldBeSendBeforeEndOfRpcMethod()
+    {
+        $request = new Request(MessageTypes::PUSH, 'push', array('zia'));
+        $this->useRequest($request);
+
+        $responseSent = false;
+        $this->transport->expects($this->once())
+            ->method('sendResponse')
+            ->will($this->returnCallback(function () use (&$responseSent) {
+                $responseSent = true;
+            }));
+
+        $test = $this;
+        $this->object->registerMethod('push', function ($arg, \Closure $callback) use ($test, &$responseSent) {
+            $callback('OK');
+            $test->assertTrue($responseSent, 'response should be send earlier');
         }, MethodTypes::PUSH);
 
         $response = new Response(MessageTypes::PUSH_ACK, 'OK');

@@ -88,7 +88,7 @@ class ZeroMQClientTransport implements ClientTransportInterface
         }
 
         if ($result === false) {
-            throw new TimeoutException('Timeout (' . $this->getTimeout() . 's) reached');
+            throw new TimeoutException('Timeout ('.$this->getTimeout().'s) reached');
         }
 
         if (!isset($result[0])) {

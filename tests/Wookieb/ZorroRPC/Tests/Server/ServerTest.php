@@ -1,5 +1,6 @@
 <?php
 namespace Wookieb\ZorroRPC\Tests\Server;
+use Wookieb\ZorroRPC\Exception\NoSuchMethodException;
 use Wookieb\ZorroRPC\Transport\ServerTransportInterface;
 use Wookieb\ZorroRPC\Serializer\ServerSerializerInterface;
 use Wookieb\ZorroRPC\Server\Server;

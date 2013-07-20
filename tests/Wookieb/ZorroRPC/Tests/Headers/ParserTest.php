@@ -6,7 +6,8 @@ use Wookieb\ZorroRPC\Exception\InvalidHeaderException;
 
 class ParserTest extends \PHPUnit_Framework_TestCase
 {
-    public function testParsingHeaders() {
+    public function testParsingHeaders()
+    {
         $headers = 'Header1:value1'."\n";
         $headers .= 'header2:value2'."\n";
 
@@ -18,14 +19,16 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($expected, Parser::parseHeaders($headers));
     }
 
-    public function testParsingInvalidHeadersShouldThrowException() {
+    public function testParsingInvalidHeadersShouldThrowException()
+    {
         $msg = 'Invalid header format';
         $this->setExpectedException('Wookieb\ZorroRPC\Exception\InvalidHeaderException', $msg);
         $headers = 'invalidHeader';
         Parser::parseHeaders($headers);
     }
 
-    public function testParsingHeaderWithInvalidNameShouldThrowException() {
+    public function testParsingHeaderWithInvalidNameShouldThrowException()
+    {
         $msg = 'Invalid header name "bad boy header"';
         $this->setExpectedException('Wookieb\ZorroRPC\Exception\InvalidHeaderException', $msg);
         $headers = 'bad boy header:test';

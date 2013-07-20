@@ -1,12 +1,11 @@
 <?php
 namespace Wookieb\ZorroRPC\Tests\Server\RPC;
-require_once __DIR__ . '/RPCBase.php';
+require_once __DIR__.'/RPCBase.php';
 
 use Wookieb\ZorroRPC\Headers\Headers;
 use Wookieb\ZorroRPC\Transport\MessageTypes;
 use Wookieb\ZorroRPC\Transport\Request;
 use Wookieb\ZorroRPC\Transport\Response;
-
 
 
 class PingTest extends RPCBase

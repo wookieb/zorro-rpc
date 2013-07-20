@@ -47,7 +47,7 @@ class ZeroMQServerTransport implements ServerTransportInterface
         $this->waitingForResponse = true;
         $requestType = (int)$message[0];
         if (!MessageTypes::isValid($requestType)) {
-            throw new FormatException('Invalid request type "' . $requestType . '"', $message);
+            throw new FormatException('Invalid request type "'.$requestType.'"', $message);
         }
 
         $request = new Request();

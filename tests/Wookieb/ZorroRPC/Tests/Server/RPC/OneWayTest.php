@@ -7,7 +7,7 @@ use Wookieb\ZorroRPC\Transport\MessageTypes;
 use Wookieb\ZorroRPC\Transport\Request;
 use Wookieb\ZorroRPC\Transport\Response;
 
-require_once __DIR__ . '/RPCBase.php';
+require_once __DIR__.'/RPCBase.php';
 
 class OneWayTest extends RPCBase
 {

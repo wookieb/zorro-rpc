@@ -197,7 +197,7 @@ class Client implements ClientInterface
         if ($responseData instanceof \Exception) {
             throw $responseData;
         }
-        $msg = 'Error caught during execution of method "' . $request->getMethodName() . '"';
+        $msg = 'Error caught during execution of method "'.$request->getMethodName().'"';
         throw new ErrorResponseException($msg, $responseData);
     }
 

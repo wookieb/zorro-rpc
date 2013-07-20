@@ -2,6 +2,7 @@
 namespace Wookieb\ZorroRPC\Tests\Headers;
 use Wookieb\ZorroRPC\Headers\Headers;
 use Wookieb\ZorroRPC\Exception\InvalidHeaderException;
+
 class HeadersTest extends \PHPUnit_Framework_TestCase
 {
     /**
@@ -51,22 +52,26 @@ class HeadersTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('rpc', $this->object->get('zorro'));
     }
 
-    public function testHeaderNamesAreCaseInsensitive() {
+    public function testHeaderNamesAreCaseInsensitive()
+    {
         $this->assertSame('value1', $this->object->get('HeAder1'));
         $this->assertSame('value1', $this->object->get('header1'));
     }
 
-    public function testGetShouldReturnNullWhenHeaderDoesNotExists() {
+    public function testGetShouldReturnNullWhenHeaderDoesNotExists()
+    {
         $this->assertNull($this->object->get('yetiHeader'));
     }
 
-    public function testSettingInvalidHeaderNameShouldThrowException() {
+    public function testSettingInvalidHeaderNameShouldThrowException()
+    {
         $msg = 'Invalid header name "bad boy header"';
         $this->setExpectedException('Wookieb\ZorroRPC\Exception\InvalidHeaderException', $msg);
         $this->object->set('bad boy header', 'kaboom');
     }
 
-    public function testShouldBeTraversableOnHeaders() {
+    public function testShouldBeTraversableOnHeaders()
+    {
         $this->assertInstanceOf('\Traversable', $this->object);
         $this->assertInstanceOf('\Traversable', $this->object->getIterator());
     }

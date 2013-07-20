@@ -78,23 +78,35 @@ class Method
     {
         $last = end($parameters);
         /* @var \ReflectionParameter $last */
-        if ($last && $last->getClass() && in_array($last->getClass()->getName(), self::$zorroRpcClasses)) {
+        if ($last && $last->getClass() && $last->getClass()->getName() === 'Wookieb\ZorroRPC\Headers\Headers') {
             array_pop($parameters);
         }
 
         $last = end($parameters);
         /* @var \ReflectionParameter $last */
-        if ($last && $last->getClass() && in_array($last->getClass()->getName(), self::$zorroRpcClasses)) {
+        if ($last && $last->getClass() && $last->getClass()->getName() === 'Wookieb\ZorroRPC\Transport\Request') {
             array_pop($parameters);
         }
 
         $last = end($parameters);
         /* @var \ReflectionParameter $last */
-        if ($this->type === MethodTypes::PUSH && $last && $last->getClass() && $last->getClass()->getName() === '\Closure') {
+        $isClosureArgument = $last && $last->getClass() && $last->getClass()->getName() === 'Closure';
+        if ($this->type === MethodTypes::PUSH && $isClosureArgument) {
             array_pop($parameters);
         }
 
         return $parameters;
+    }
+
+
+    public function getNumOfRequiredArguments()
+    {
+        return $this->numOfRequiredArguments;
+    }
+
+    public function getDefaultArguments()
+    {
+        return $this->defaultArguments;
     }
 
     public function getCallback()
@@ -115,12 +127,19 @@ class Method
     public function call(array $arguments, Request $request, Headers $responseHeaders = null, $callback = null)
     {
         if (count($arguments) < $this->numOfRequiredArguments) {
-            $msg = 'Insufficient number of arguments. ' . $this->numOfRequiredArguments . ' required';
+            $msg = 'Insufficient number of arguments. '.$this->numOfRequiredArguments.' required';
             throw new \InvalidArgumentException($msg);
         }
+
         if ($callback && $this->type !== MethodTypes::PUSH) {
             throw new \InvalidArgumentException('Callback argument is only available for PUSH methods');
         }
+
+        if (!$responseHeaders && $this->type !== MethodTypes::ONE_WAY) {
+            $msg = 'Response headers argument is required for method types other than ONE WAY CALL';
+            throw new \InvalidArgumentException($msg);
+        }
+
         $args = $arguments + $this->defaultArguments;
         if ($callback) {
             $args[] = $callback;

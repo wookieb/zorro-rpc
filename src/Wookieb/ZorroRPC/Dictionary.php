@@ -48,7 +48,7 @@ abstract class Dictionary
     {
         $key = array_search($value, self::getAll(), true);
         if ($key === false) {
-            throw new \OutOfBoundsException('There is no name in dictionary for given value "' . $value . '"');
+            throw new \OutOfBoundsException('There is no name in dictionary for given value "'.$value.'"');
         }
         return $key;
     }

@@ -32,13 +32,18 @@ class RPCBase extends \PHPUnit_Framework_TestCase
      */
     protected $methods = array();
 
+    protected $useFalseWaitingForResponse = true;
+
     protected function setUp()
     {
         $this->serializer = $this->getMockForAbstractClass('Wookieb\ZorroRPC\Serializer\ServerSerializerInterface');
         $this->transport = $this->getMockForAbstractClass('Wookieb\ZorroRPC\Transport\ServerTransportInterface');
-        $this->transport->expects($this->any())
-            ->method('isWaitingForResponse')
-            ->will($this->returnValue(false));
+        if ($this->useFalseWaitingForResponse) {
+            $this->transport->expects($this->any())
+                ->method('isWaitingForResponse')
+                ->will($this->returnValue(false));
+        }
+
 
         $this->rpcTarget = $this->getMock('\stdClass', $this->methods);
 
@@ -47,13 +52,13 @@ class RPCBase extends \PHPUnit_Framework_TestCase
         });
     }
 
-    protected function useRequest(Request $request)
+    protected function useRequest(Request $request, $neverUnserializeArguments = false)
     {
         $this->transport->expects($this->atLeastOnce())
             ->method('receiveRequest')
             ->will($this->returnValue($request));
 
-        if ($request->getType() === MessageTypes::PING) {
+        if ($request->getType() === MessageTypes::PING || $neverUnserializeArguments) {
             $this->serializer->expects($this->never())
                 ->method('unserializeArguments');
         } else {

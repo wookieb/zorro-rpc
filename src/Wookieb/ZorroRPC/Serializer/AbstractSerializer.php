@@ -88,7 +88,7 @@ abstract class AbstractSerializer
             throw new DataFormatNotFoundException('Default data format not defined');
         }
         if (!isset($this->serializers[$mimeType])) {
-            throw new DataFormatNotFoundException('No data format defined for mime type "' . $mimeType . '"');
+            throw new DataFormatNotFoundException('No data format defined for mime type "'.$mimeType.'"');
         }
         return $this->serializers[$mimeType];
     }
