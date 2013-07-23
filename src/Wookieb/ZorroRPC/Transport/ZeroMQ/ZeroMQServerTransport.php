@@ -58,7 +58,8 @@ class ZeroMQServerTransport implements ServerTransportInterface
                 throw new FormatException('Method name is empty', $message);
             }
             $request->setMethodName($message[2]);
-            $arguments = array_slice($request, 3);
+
+            $arguments = array_slice($message, 3);
             $request->setArgumentsBody($arguments);
         }
         return $request;
@@ -72,7 +73,7 @@ class ZeroMQServerTransport implements ServerTransportInterface
         $message = array(
             $response->getType()
         );
-        print_r($response);
+
         if ($response->getType() !== MessageTypes::PONG) {
             $message[1] = (string)$response->getHeaders();
             if ($response->getType() !== MessageTypes::ONE_WAY_CALL_ACK) {
@@ -80,8 +81,13 @@ class ZeroMQServerTransport implements ServerTransportInterface
             }
         }
 
-        $this->waitingForResponse = false;
-        $this->socket->sendMulti($message);
+        try {
+            $this->socket->sendMulti($message);
+            $this->waitingForResponse = false;
+        } catch (\Exception $e) {
+            $this->waitingForResponse = false;
+            throw $e;
+        }
     }
 
     /**

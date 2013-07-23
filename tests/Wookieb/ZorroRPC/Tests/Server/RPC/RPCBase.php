@@ -8,7 +8,7 @@ use Wookieb\ZorroRPC\Transport\Request;
 use Wookieb\ZorroRPC\Transport\Response;
 use Wookieb\ZorroRPC\Transport\ServerTransportInterface;
 
-class RPCBase extends \PHPUnit_Framework_TestCase
+abstract class RPCBase extends \PHPUnit_Framework_TestCase
 {
 
     /**

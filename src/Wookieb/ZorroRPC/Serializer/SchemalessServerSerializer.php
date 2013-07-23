@@ -1,6 +1,7 @@
 <?php
 
 namespace Wookieb\ZorroRPC\Serializer;
+use Wookieb\ZorroRPC\Serializer\DataFormat\DataFormatInterface;
 
 /**
  * Serializer that works without schema

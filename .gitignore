@@ -2,3 +2,5 @@
 /vendor/
 composer.lock
 test.php
+examples/one_way.log
+examples/queue.log

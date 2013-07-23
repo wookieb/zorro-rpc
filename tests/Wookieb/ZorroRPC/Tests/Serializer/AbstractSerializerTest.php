@@ -7,7 +7,7 @@ use Wookieb\ZorroRPC\Exception\DataFormatNotFoundException;
 class AbstractSerializerTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var AbstractSerializer
+     * @var AbstractSerializer|\PHPUnit_Framework_MockObject_MockObject
      */
     private $object;
 
@@ -28,6 +28,11 @@ class AbstractSerializerTest extends \PHPUnit_Framework_TestCase
         return $mock;
     }
 
+    public function testShouldBeAbleToSetDefaultDataFormatFromConstructor() {
+        $dataFormat = $this->createDataFormat(array('application/wookieb'));
+        $this->object = $this->getMockForAbstractClass('Wookieb\ZorroRPC\Serializer\AbstractSerializer', array($dataFormat));
+        $this->assertSame($dataFormat, $this->object->getDefaultDataFormat());
+    }
 
     public function testRegisterDataFormat()
     {

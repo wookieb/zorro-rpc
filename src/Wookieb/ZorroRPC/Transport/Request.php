@@ -102,4 +102,14 @@ class Request
     {
         return $this->headers;
     }
+
+    /**
+     * Indicate that request expects result in corresponding response
+     *
+     * @return bool
+     */
+    public function isExpectingResult()
+    {
+        return $this->type !== MessageTypes::PING && $this->type !== MessageTypes::ONE_WAY_CALL_ACK;
+    }
 }

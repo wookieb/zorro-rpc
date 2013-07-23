@@ -14,6 +14,13 @@ abstract class AbstractSerializer
     private $serializers = array();
     private $defaultMimeType;
 
+    public function __construct(DataFormatInterface $defaultDataFormat = null)
+    {
+        if ($defaultDataFormat) {
+            $this->setDefaultDataFormat($defaultDataFormat);
+        }
+    }
+
     /**
      * Register data format and use it by default for all operations without defined mime type
      *

@@ -83,7 +83,7 @@ class Client implements ClientInterface
      */
     public function call($method, array $arguments = array(), Headers $headers = null)
     {
-        $request = $this->createRequest(MessageTypes::REQUEST, $method, $arguments);
+        $request = $this->createRequest(MessageTypes::REQUEST, $method, $arguments, $headers);
         $this->send($request);
         return $this->obtainResponse($this->receive(), $request);
     }
@@ -93,7 +93,7 @@ class Client implements ClientInterface
      */
     public function oneWayCall($method, array $arguments = array(), Headers $headers = null)
     {
-        $request = $this->createRequest(MessageTypes::ONE_WAY_CALL, $method, $arguments);
+        $request = $this->createRequest(MessageTypes::ONE_WAY_CALL, $method, $arguments, $headers);
         $this->send($request);
         $this->obtainResponse($this->receive(), $request);
     }
@@ -117,7 +117,7 @@ class Client implements ClientInterface
      */
     public function push($method, array $arguments = array(), Headers $headers = null)
     {
-        $request = $this->createRequest(MessageTypes::PUSH, $method, $arguments);
+        $request = $this->createRequest(MessageTypes::PUSH, $method, $arguments, $headers);
         $this->send($request);
         return $this->obtainResponse($this->receive(), $request);
     }
@@ -127,12 +127,13 @@ class Client implements ClientInterface
         $request = new Request();
         $request->setType($type);
 
-        if ($method) {
-            $requestHeaders = new Headers($this->defaultHeaders->getAll());
-            foreach ($headers as $headerName => $headerValue) {
-                $requestHeaders->set($headerName, $headerValue);
-            }
+        $requestHeaders = $this->defaultHeaders ? clone $this->defaultHeaders : new Headers;
+        if ($headers) {
+            $requestHeaders->merge($headers);
+        }
+        $request->setHeaders($requestHeaders);
 
+        if ($method) {
             $contentType = $requestHeaders->get('content-type');
             $arguments = $this->serializer->serializeArguments(
                 $method,
@@ -140,8 +141,7 @@ class Client implements ClientInterface
                 $contentType
             );
 
-            $request->setHeaders($requestHeaders)
-                ->setMethodName($method)
+            $request->setMethodName($method)
                 ->setArgumentsBody($arguments);
         }
         return $request;
@@ -157,9 +157,6 @@ class Client implements ClientInterface
     {
         // woah, time to handle error
         if ($response->getType() === MessageTypes::ERROR) {
-            if ($request->getType() === MessageTypes::PING) {
-                throw new FormatException('It is impossible to receive error response on PING requests', $response);
-            }
             $this->handleError($response, $request);
         }
 
@@ -197,7 +194,12 @@ class Client implements ClientInterface
         if ($responseData instanceof \Exception) {
             throw $responseData;
         }
-        $msg = 'Error caught during execution of method "'.$request->getMethodName().'"';
+        if ($request->getType() === MessageTypes::PING) {
+            $msg = 'Error caught during ping';
+        } else {
+            $msg = 'Error caught during execution of method "'.$request->getMethodName().'"';
+        }
+
         throw new ErrorResponseException($msg, $responseData);
     }
 

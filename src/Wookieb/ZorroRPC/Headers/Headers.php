@@ -86,6 +86,13 @@ class Headers implements \IteratorAggregate
         return $this->headers;
     }
 
+    public function merge(Headers $headers)
+    {
+        foreach ($headers as $headerName => $headerValue) {
+            $this->set($headerName, $headerValue);
+        }
+    }
+
     public function __toString()
     {
         $headers = '';
