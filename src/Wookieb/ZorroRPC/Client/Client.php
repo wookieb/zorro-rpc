@@ -185,7 +185,7 @@ class Client implements ClientInterface
 
     private function handleError(Response $response, Request $request)
     {
-        $responseData = $this->serializer->unserializeResult(
+        $responseData = $this->serializer->unserializeError(
             $request->getMethodName(),
             $response->getResultBody(),
             $response->getHeaders()->get('Content-Type')

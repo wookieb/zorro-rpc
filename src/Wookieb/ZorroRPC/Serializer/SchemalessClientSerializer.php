@@ -3,6 +3,8 @@
 namespace Wookieb\ZorroRPC\Serializer;
 
 
+use Wookieb\ZorroRPC\Exception\DataFormatNotFoundException;
+
 class SchemalessClientSerializer extends AbstractSerializer implements ClientSerializerInterface
 {
     /**
@@ -21,4 +23,14 @@ class SchemalessClientSerializer extends AbstractSerializer implements ClientSer
     {
         return $this->getDataFormatForMimeType($mimeType)->unserialize($result);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    function unserializeError($method, $error, $mimeType = null)
+    {
+        return $this->getDataFormatForMimeType($mimeType)->unserialize($error);
+    }
+
+
 }

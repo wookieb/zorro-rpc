@@ -71,14 +71,15 @@ abstract class RPCBase extends \PHPUnit_Framework_TestCase
 
     protected function useResponse(Request $request, Response $response)
     {
-        if ($request->getType() === MessageTypes::PING || $request->getType() === MessageTypes::ONE_WAY_CALL) {
-            $this->serializer->expects($this->never())
-                ->method('serializeResult');
-        } else {
+        if ($request->isExpectingResult()) {
             $this->serializer->expects($this->once())
-                ->method('serializeResult')
+                ->method($response->getType() === MessageTypes::ERROR ? 'serializeError' : 'serializeResult')
                 ->with($request->getMethodName(), $this->equalTo($response->getResultBody(), 0, 0), $response->getHeaders()->get('content-type'))
                 ->will($this->returnValue($response->getResultBody()));
+        } else {
+            $this->serializer->expects($this->never())
+                ->method('serializeResult');
+
         }
 
         $this->transport->expects($this->once())

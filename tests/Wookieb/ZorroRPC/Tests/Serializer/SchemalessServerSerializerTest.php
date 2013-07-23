@@ -55,4 +55,18 @@ class SchemalessServerSerializerTest extends \PHPUnit_Framework_TestCase
         $result = $this->object->serializeResult('some_method', $result);
         $this->assertSame($resultString, $result);
     }
+
+    public function testShouldForwardErrorToDataFormat()
+    {
+        $exception = new \Exception('SomeException');
+        $exceptionString = 'SomeException';
+
+        $this->dataFormat->expects($this->once())
+            ->method('serialize')
+            ->with($this->equalTo($exception))
+            ->will($this->returnValue($exceptionString));
+
+        $exception = $this->object->serializeError('some_method', $exception);
+        $this->assertSame($exceptionString, $exception);
+    }
 }

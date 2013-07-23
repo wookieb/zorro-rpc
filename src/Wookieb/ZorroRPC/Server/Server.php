@@ -149,7 +149,7 @@ class Server implements ServerInterface
     {
         foreach ($methods as $method) {
             if (!$method instanceof Method) {
-                throw new \InvalidArgumentException('Every element of methods list must be instance of Method');
+                throw new \InvalidArgumentException('Every element of list must be instance of Method');
             }
             $this->registerMethod($method);
         }
@@ -309,13 +309,20 @@ class Server implements ServerInterface
             return $response;
         }
 
-        $response->setResultBody(
-            $this->serializer->serializeResult(
+        if ($type === MessageTypes::ERROR) {
+            $resultBody = $this->serializer->serializeError(
                 $request->getMethodName(),
                 $result,
                 $response->getHeaders()->get('content-type')
-            )
-        );
+            );
+        } else {
+            $resultBody = $this->serializer->serializeResult(
+                $request->getMethodName(),
+                $result,
+                $response->getHeaders()->get('content-type')
+            );
+        }
+        $response->setResultBody($resultBody);
         return $response;
     }
 }

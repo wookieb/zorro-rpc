@@ -20,6 +20,7 @@ interface ClientSerializerInterface
      * @param array $arguments
      * @param string|null $mimeType target mime type, Null if default mime type
      * @throws DataFormatNotFoundException
+     * @throws SerializationException
      * @return array of serialized arguments
      */
     function serializeArguments($method, array $arguments, $mimeType = null);
@@ -31,7 +32,20 @@ interface ClientSerializerInterface
      * @param string $result
      * @param string|null $mimeType target mime type. Null if default mime type
      * @throws DataFormatNotFoundException
+     * @throws SerializationException
      * @return mixed
      */
     function unserializeResult($method, $result, $mimeType = null);
+
+    /**
+     * Unserializer response error for given RPC method name
+     *
+     * @param string $method
+     * @param string $error
+     * @param string|null $mimeType
+     * @throws DataFormatNotFoundException
+     * @throws SerializationException
+     * @return mixed
+     */
+    function unserializeError($method, $error, $mimeType = null);
 }

@@ -34,4 +34,16 @@ interface ServerSerializerInterface
      * @return string
      */
     function serializeResult($method, $result, $mimeType = null);
+
+    /**
+     * Serialize exception for given RPC method name
+     *
+     * @param string $method
+     * @param \Exception $error
+     * @param string|null $mimeType
+     * @throws DataFormatNotFoundException
+     * @throws SerializationException
+     * @return string
+     */
+    function serializeError($method, \Exception $error, $mimeType = null);
 }

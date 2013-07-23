@@ -86,4 +86,21 @@ class ServerTest extends \PHPUnit_Framework_TestCase
         $result = $this->server->setDefaultHeaders($headers);
         $this->assertSame($this->server, $result, 'Method chaining violation at "setDefaultHeaders"');
     }
+
+    public function testShouldGiveAccessToSerializer()
+    {
+        $this->assertSame($this->serializer, $this->server->getSerializer());
+    }
+
+    public function testErrorCallbackShouldBeCallable()
+    {
+        $this->setExpectedException('\InvalidArgumentException', 'Argument must be a callback');
+        $this->server->setOnErrorCallback(false);
+    }
+
+    public function testArgumentProvidedToRegisterMethodsMustBeAnArrayOfMethodInstance()
+    {
+        $this->setExpectedException('\InvalidArgumentException', 'Every element of list must be instance of Method');
+        $this->server->registerMethods(array('test'));
+    }
 }

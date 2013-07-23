@@ -22,7 +22,7 @@ interface ClientInterface
      *
      * @return mixed response from remote server
      *
-     * @throws ErrorResponseException when something goes wrong on the remote server side
+     * @throws ErrorResponseException when something went wrong on the remote server side
      * @throws TimeoutException when timeout occurs :)
      * @throws FormatException when response from server is malformed
      */
@@ -61,7 +61,7 @@ interface ClientInterface
      * @param Headers $headers request headers
      * @return mixed
      *
-     * @throws ErrorResponseException when something goes wrong on the remote server side
+     * @throws ErrorResponseException when something went wrong on the remote server side
      * @throws TimeoutException when timeout occurs :)
      * @throws FormatException when response from server is malformed
      */

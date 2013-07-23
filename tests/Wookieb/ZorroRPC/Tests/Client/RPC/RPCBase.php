@@ -63,7 +63,7 @@ abstract class RPCBase extends \PHPUnit_Framework_TestCase
         if ($unserializeResult && ($request->isExpectingResult() || $response->getType() === MessageTypes::ERROR)) {
             $contentType = $response->getHeaders()->get('content-type');
             $this->serializer->expects($this->once())
-                ->method('unserializeResult')
+                ->method($response->getType() === MessageTypes::ERROR ? 'unserializeError' : 'unserializeResult')
                 ->with($request->getMethodName(), $response->getResultBody(), $contentType)
                 ->will($this->returnValue($response->getResultBody()));
         }

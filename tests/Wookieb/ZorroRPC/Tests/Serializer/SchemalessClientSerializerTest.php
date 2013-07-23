@@ -54,4 +54,17 @@ class SchemalessClientSerializerTest extends \PHPUnit_Framework_TestCase
         $resultData = $this->object->unserializeResult('some method', $resultString);
         $this->assertEquals($result, $resultData);
     }
+
+    public function testShouldForwardErrorStringToDataFormat()
+    {
+        $result = new \Exception('Some error string');
+        $errorString = 'SomeErrorString';
+        $this->dataFormat->expects($this->once())
+            ->method('unserialize')
+            ->with($this->equalTo($errorString))
+            ->will($this->returnValue($result));
+
+        $resultData = $this->object->unserializeError('some method', $errorString);
+        $this->assertEquals($result, $resultData);
+    }
 }
