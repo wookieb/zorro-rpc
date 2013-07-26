@@ -3,8 +3,9 @@
     "license": "MIT",
     "authors": [
         {
-            "name": "wookieb",
-            "email": "wookieb@wp.pl"
+            "name": "Łukasz Kużyński",
+            "email": "lukasz.kuzynski@gmail.com",
+            "homepage": "http://wookieb.pl"
         }
     ],
     "require": {
