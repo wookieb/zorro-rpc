@@ -3,6 +3,7 @@
 namespace Wookieb\ZorroRPC\Serializer;
 use Wookieb\ZorroRPC\Exception\DataFormatNotFoundException;
 use Wookieb\ZorroRPC\Exception\SerializationException;
+use Wookieb\ZorroRPC\Exception\ExceptionChanger;
 use Wookieb\ZorroRPC\Serializer\DataFormat\DataFormatInterface;
 
 /**
@@ -36,6 +37,4 @@ class SchemalessServerSerializer extends AbstractSerializer implements ServerSer
     {
         return $this->getDataFormatForMimeType($mimeType)->serialize($error);
     }
-
-
 }

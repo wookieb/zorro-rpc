@@ -2,6 +2,7 @@
 namespace Wookieb\ZorroRPC\Client;
 use Wookieb\ZorroRPC\Exception\ErrorResponseException;
 use Wookieb\ZorroRPC\Exception\FormatException;
+use Wookieb\ZorroRPC\Exception\ExceptionChanger;
 use Wookieb\ZorroRPC\Serializer\ClientSerializerInterface;
 use Wookieb\ZorroRPC\Transport\ClientTransportInterface;
 use Wookieb\ZorroRPC\Transport\MessageTypes;
@@ -29,11 +30,6 @@ class Client implements ClientInterface
      * @var Headers
      */
     private $defaultHeaders;
-
-    /**
-     * @var \ReflectionProperty
-     */
-    private $traceProperty;
 
     private static $validResponseType = array(
         MessageTypes::REQUEST => MessageTypes::RESPONSE,
@@ -213,21 +209,7 @@ class Client implements ClientInterface
     {
         $trace = debug_backtrace();
         $trace = array_slice($trace, 3);
-        $traceProperty = $this->getReflectionOfTraceProperty();
-        $traceProperty->setValue($e, $trace);
-    }
-
-    /**
-     * @return \ReflectionProperty
-     */
-    private function getReflectionOfTraceProperty()
-    {
-        if (!$this->traceProperty) {
-            $reflection = new \ReflectionClass('\Exception');
-            $this->traceProperty = $reflection->getProperty('trace');
-            $this->traceProperty->setAccessible(true);
-        }
-        return $this->traceProperty;
+        ExceptionChanger::enchantWithTrace($e, $trace);
     }
 
     private function send(Request $request)

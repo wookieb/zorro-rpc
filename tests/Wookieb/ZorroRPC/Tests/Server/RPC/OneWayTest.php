@@ -33,7 +33,7 @@ class OneWayTest extends RPCBase
         $this->rpcTarget->expects($this->once())
             ->method('owc')
             ->with('zia')
-            ->will($this->returnCallback(function ($arg, Request $request, Headers $headers) {
+            ->will($this->returnCallback(function ($arg, Request $request) {
                 return 'OK';
             }));
 
@@ -83,9 +83,10 @@ class OneWayTest extends RPCBase
         $this->rpcTarget->expects($this->once())
             ->method('owc')
             ->will($this->returnCallback(function () use ($test) {
+                $arguments = func_get_args();
                 $test->assertSame(1, func_get_arg(0));
                 $test->assertInstanceOf('Wookieb\ZorroRPC\Transport\Request', func_get_arg(1));
-                $test->assertSame(null, func_get_arg(2));
+                $test->assertArrayNotHasKey(2, $arguments, 'one way call cannot get response headers as argument');
             }));
 
         $response = new Response(MessageTypes::ONE_WAY_CALL_ACK);
@@ -120,14 +121,12 @@ class OneWayTest extends RPCBase
 
         $test = $this;
         $this->object->registerMethod('owcWithDefaults', function ($arg1, $arg2 = 1, $arg3 = 2) use ($test) {
-            $request = func_get_arg(4);
-            $headers = func_get_arg(5);
+            $request = func_get_arg(3);
 
             $test->assertEquals('zia', $arg1);
             $test->assertEquals(1, $arg2);
             $test->assertEquals(2, $arg3);
             $test->assertInstanceOf('Wookieb\ZorroRPC\Transport\Request', $request);
-            $test->assertNull($headers);
 
             return 'OK';
         }, MethodTypes::ONE_WAY);

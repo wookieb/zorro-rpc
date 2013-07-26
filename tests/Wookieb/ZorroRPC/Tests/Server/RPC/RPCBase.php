@@ -49,6 +49,7 @@ abstract class RPCBase extends \PHPUnit_Framework_TestCase
 
         $this->object = new Server($this->transport, $this->serializer);
         $this->object->setOnErrorCallback(function ($e) {
+            throw $e;
         });
     }
 
@@ -69,7 +70,7 @@ abstract class RPCBase extends \PHPUnit_Framework_TestCase
         }
     }
 
-    protected function useResponse(Request $request, Response $response)
+    protected function useResponse(Request $request, Response $response, $filter = null)
     {
         if ($request->isExpectingResult()) {
             $this->serializer->expects($this->once())
@@ -82,8 +83,14 @@ abstract class RPCBase extends \PHPUnit_Framework_TestCase
 
         }
 
+        if (!$filter) {
+            $filter = function () {
+
+            };
+        }
         $this->transport->expects($this->once())
             ->method('sendResponse')
-            ->with($response);
+            ->with($response)
+            ->will($this->returnCallback($filter));
     }
 }

@@ -155,7 +155,10 @@ class BasicTest extends RPCBase
             ->will($this->throwException($exception));
 
         $response = new Response(MessageTypes::ERROR, $exception);
-        $this->useResponse($request, $response);
+        $test = $this;
+        $this->useResponse($request, $response, function(Response $response) use ($test) {
+            $test->assertEquals(array(), $response->getResultBody()->getTrace(), 'Trace of exception must be empty');
+        });;
 
         $this->object->handleCall();
     }

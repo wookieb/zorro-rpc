@@ -1,5 +1,6 @@
 <?php
 namespace Wookieb\ZorroRPC\Server;
+use Wookieb\ZorroRPC\Exception\ExceptionChanger;
 use Wookieb\ZorroRPC\Serializer\ServerSerializerInterface;
 use Wookieb\ZorroRPC\Transport\MessageTypes;
 use Wookieb\ZorroRPC\Transport\ServerTransportInterface;
@@ -309,6 +310,9 @@ class Server implements ServerInterface
         }
 
         if ($type === MessageTypes::ERROR) {
+            if ($result instanceof \Exception) {
+                ExceptionChanger::clean($result);
+            }
             $resultBody = $this->serializer->serializeError(
                 $request->getMethodName(),
                 $result,
