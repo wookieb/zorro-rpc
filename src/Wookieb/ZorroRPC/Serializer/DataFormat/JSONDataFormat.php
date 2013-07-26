@@ -44,6 +44,15 @@ class JSONDataFormat implements DataFormatInterface
         return $this;
     }
 
+    /**
+     * Returns value set in {@see setSerializedPropertiesVisibility}
+     * @return integer
+     */
+    public function getSerializedPropertiesVisibility()
+    {
+        return $this->serializedPropertiesVisibility;
+    }
+
     private function prepareDataToSerialization($data)
     {
         switch (true) {
@@ -79,6 +88,7 @@ class JSONDataFormat implements DataFormatInterface
                 }
                 return $dataToSerialize;
                 break;
+
             case is_array($data):
                 foreach ($data as &$value) {
                     $value = $this->prepareDataToSerialization($value);
