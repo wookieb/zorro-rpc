@@ -10,7 +10,7 @@ use Wookieb\ZorroRPC\Serializer\DataFormat\PHPNativeSerializerDataFormat;
 use Wookieb\ZorroRPC\Headers\Headers;
 
 
-$transport = new ZeroMQClientTransport('tcp://0.0.0.0:1500');
+$transport = ZeroMQClientTransport::create('tcp://0.0.0.0:1500');
 $serializer = new SchemalessClientSerializer(new JSONDataFormat());
 
 $client = new Client($transport, $serializer);

@@ -34,7 +34,7 @@ class ZeroMQClientTransport implements ClientTransportInterface
      * @param integer $timeout
      * @return ZeroMQClientTransport
      */
-    public static function create(array $servers, $timeout = 1)
+    public static function create($servers, $timeout = 1)
     {
         $socket = new \ZMQSocket(new \ZMQContext, \ZMQ::SOCKET_REQ);
         $socket->setSockOpt(\ZMQ::SOCKOPT_LINGER, 0);

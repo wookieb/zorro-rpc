@@ -11,7 +11,7 @@ use Wookieb\ZorroRPC\Headers\Headers;
 use Wookieb\ZorroRPC\Server\MethodTypes;
 
 
-$transport = new ZeroMQServerTransport('tcp://0.0.0.0:1500');
+$transport = ZeroMQServerTransport::create('tcp://0.0.0.0:1500');
 $serializer = new SchemalessServerSerializer(new JSONDataFormat());
 
 $server = new Server($transport, $serializer);
