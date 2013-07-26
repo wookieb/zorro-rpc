@@ -1,7 +1,0 @@
-* tests for zeromq transport
-* what about ServerException. Do we need this?
-* events for client and server
-* autodiscover tests
-* changing stack trace of exceptions that comes from error response
-* RPC schema
-* data schema

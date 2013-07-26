@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by JetBrains PhpStorm.
- * User: wookieb
- * Date: 21.05.13
- * Time: 22:15
- * To change this template use File | Settings | File Templates.
- */
 
 namespace Wookieb\ZorroRPC\Transport\ZeroMQ;
 use Wookieb\ZorroRPC\Headers\Parser;
@@ -25,23 +18,38 @@ class ZeroMQClientTransport implements ClientTransportInterface
      */
     private $socket;
 
-    public function __construct($servers, $timeout = 1)
+    public function __construct(\ZMQSocket $socket)
     {
-        $servers = (array)$servers;
-        $this->socket = $this->createSocket($servers);
-        $this->setTimeout($timeout);
+        if ($socket->getSocketType() !== \ZMQ::SOCKET_REQ) {
+            throw new \InvalidArgumentException('Invalid socket type. REQ required');
+        }
+        $socket->setSockOpt(\ZMQ::SOCKOPT_LINGER, 0);
+        $this->socket = $socket;
     }
 
-    protected function createSocket(array $servers)
+    /**
+     * Returns client with newly created ZeroMQ Socket
+     *
+     * @param array $servers list of addresses of servers
+     * @param integer $timeout
+     * @return ZeroMQClientTransport
+     */
+    public static function create(array $servers, $timeout = 1)
     {
         $socket = new \ZMQSocket(new \ZMQContext, \ZMQ::SOCKET_REQ);
         $socket->setSockOpt(\ZMQ::SOCKOPT_LINGER, 0);
-        foreach ($servers as $server) {
+        foreach ((array)$servers as $server) {
             $socket->connect($server);
         }
-        return $socket;
+        $client = new self($socket);
+        $client->setTimeout($timeout);
+        return $client;
     }
 
+    /**
+     * @param integer $timeout a number of seconds to wait for response
+     * @return self
+     */
     public function setTimeout($timeout)
     {
         $this->socket->setSockOpt(\ZMQ::SOCKOPT_RCVTIMEO, $timeout * 1000);
@@ -94,14 +102,12 @@ class ZeroMQClientTransport implements ClientTransportInterface
         if (!isset($result[0])) {
             throw new FormatException('Invalid response - no response type', $result);
         }
-        $response = new Response();
-        $response->setType((int)$result[0]);
-
 
         if (!isset($result[1])) {
             throw new FormatException('Invalid response - no headers', $result);
         }
 
+        $response = new Response((int)$result[0]);
         $response->setHeaders(
             new Headers(Parser::parseHeaders($result[1]))
         );

@@ -10,6 +10,7 @@
 namespace Wookieb\ZorroRPC\Transport\ZeroMQ;
 use Wookieb\ZorroRPC\Exception\FormatException;
 use Wookieb\ZorroRPC\Exception\TimeoutException;
+use Wookieb\ZorroRPC\Exception\TransportException;
 use Wookieb\ZorroRPC\Transport\MessageTypes;
 use Wookieb\ZorroRPC\Transport\Request;
 use Wookieb\ZorroRPC\Transport\Response;
@@ -23,37 +24,41 @@ class ZeroMQServerTransport implements ServerTransportInterface
 
     private $waitingForResponse = false;
 
-    public function __construct($addresses)
+    public function __construct(\ZMQSocket $socket)
     {
-        $addresses = (array)$addresses;
-        $this->socket = $this->createSocket($addresses);
+        if ($socket->getSocketType() !== \ZMQ::SOCKET_REP) {
+            throw new \InvalidArgumentException('Invalid socket type. REP required');
+        }
+        $this->socket = $socket;
     }
 
-    protected function createSocket(array $addresses)
+    public static function create($address)
     {
         $socket = new \ZMQSocket(new \ZMQContext(), \ZMQ::SOCKET_REP);
-        foreach ($addresses as $address) {
-            $socket->bind($address);
-        }
-        return $socket;
+        $socket->bind($address);
+        return new self($socket);
     }
+
 
     /**
      * {@inheritDoc}
      */
     public function receiveRequest()
     {
-        $message = $this->socket->recvMulti();
+        try {
+            $message = $this->socket->recvMulti();
+        } catch (\Exception $e) {
+            throw new TransportException('Unable to receive request', null, $e);
+        }
         $this->waitingForResponse = true;
         $requestType = (int)$message[0];
         if (!MessageTypes::isValid($requestType)) {
             throw new FormatException('Invalid request type "'.$requestType.'"', $message);
         }
 
-        $request = new Request();
-        $request->setType($requestType);
+        $request = new Request($requestType);
+        $request->setHeaders(new Headers(Parser::parseHeaders(@$message[1])));
         if ($requestType !== MessageTypes::PING) {
-            $request->setHeaders(new Headers(Parser::parseHeaders(@$message[1])));
             if (empty($message[2])) {
                 throw new FormatException('Method name is empty', $message);
             }
@@ -71,14 +76,12 @@ class ZeroMQServerTransport implements ServerTransportInterface
     public function sendResponse(Response $response)
     {
         $message = array(
-            $response->getType()
+            $response->getType(),
+            (string)$response->getHeaders()
         );
 
-        if ($response->getType() !== MessageTypes::PONG) {
-            $message[1] = (string)$response->getHeaders();
-            if ($response->getType() !== MessageTypes::ONE_WAY_CALL_ACK) {
-                $message[2] = $response->getResultBody();
-            }
+        if ($response->getType() !== MessageTypes::PONG && $response->getType() !== MessageTypes::ONE_WAY_CALL_ACK) {
+            $message[2] = $response->getResultBody();
         }
 
         try {
@@ -86,7 +89,7 @@ class ZeroMQServerTransport implements ServerTransportInterface
             $this->waitingForResponse = false;
         } catch (\Exception $e) {
             $this->waitingForResponse = false;
-            throw $e;
+            throw new TransportException('Unable to send request', null, $e);
         }
     }
 
@@ -97,6 +100,4 @@ class ZeroMQServerTransport implements ServerTransportInterface
     {
         return $this->waitingForResponse;
     }
-
-
 }
