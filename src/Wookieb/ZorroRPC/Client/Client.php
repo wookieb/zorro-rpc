@@ -30,6 +30,11 @@ class Client implements ClientInterface
      */
     private $defaultHeaders;
 
+    /**
+     * @var \ReflectionProperty
+     */
+    private $traceProperty;
+
     private static $validResponseType = array(
         MessageTypes::REQUEST => MessageTypes::RESPONSE,
         MessageTypes::ONE_WAY_CALL => MessageTypes::ONE_WAY_CALL_ACK,
@@ -192,6 +197,7 @@ class Client implements ClientInterface
         );
 
         if ($responseData instanceof \Exception) {
+            $this->replaceExceptionTrace($responseData);
             throw $responseData;
         }
         if ($request->getType() === MessageTypes::PING) {
@@ -201,6 +207,27 @@ class Client implements ClientInterface
         }
 
         throw new ErrorResponseException($msg, $responseData);
+    }
+
+    private function replaceExceptionTrace(\Exception $e)
+    {
+        $trace = debug_backtrace();
+        $trace = array_slice($trace, 3);
+        $traceProperty = $this->getReflectionOfTraceProperty();
+        $traceProperty->setValue($e, $trace);
+    }
+
+    /**
+     * @return \ReflectionProperty
+     */
+    private function getReflectionOfTraceProperty()
+    {
+        if (!$this->traceProperty) {
+            $reflection = new \ReflectionClass('\Exception');
+            $this->traceProperty = $reflection->getProperty('trace');
+            $this->traceProperty->setAccessible(true);
+        }
+        return $this->traceProperty;
     }
 
     private function send(Request $request)

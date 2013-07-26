@@ -1,6 +1,5 @@
 <?php
 namespace Wookieb\ZorroRPC\Server;
-use Wookieb\ZorroRPC\Exception\ServerException;
 use Wookieb\ZorroRPC\Serializer\ServerSerializerInterface;
 use Wookieb\ZorroRPC\Transport\MessageTypes;
 use Wookieb\ZorroRPC\Transport\ServerTransportInterface;

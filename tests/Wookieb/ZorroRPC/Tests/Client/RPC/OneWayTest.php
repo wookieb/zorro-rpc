@@ -54,7 +54,13 @@ class OneWayTest extends RPCBase
 
         $this->setExpectedException('\Exception', 'RPC Error');
 
-        $this->object->oneWayCall('oneWay');
+        try {
+            $this->object->oneWayCall('oneWay');
+        } catch (\Exception $e) {
+            $trace = $e->getTrace();
+            $this->assertSame(__FILE__, $trace[0]['file'], 'Trace stack of unserialized should be changed');
+            throw $e;
+        }
     }
 
     public function testTimeout()

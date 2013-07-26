@@ -65,7 +65,14 @@ class PushTest extends RPCBase
         $this->useResponse($request, $response);
 
         $this->setExpectedException('\Exception', 'RPC Error');
-        $this->object->push('push');
+
+        try {
+            $this->object->push('push');
+        } catch (\Exception $e) {
+            $trace = $e->getTrace();
+            $this->assertSame(__FILE__, $trace[0]['file'], 'Trace stack of unserialized should be changed');
+            throw $e;
+        }
     }
 
     public function testTimeout()
