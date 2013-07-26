@@ -34,7 +34,7 @@ class SchemalessServerSerializerTest extends \PHPUnit_Framework_TestCase
         $argumentsString = array('some serialized argument');
         $arguments = array('unserialized argument');
         $this->dataFormat->expects($this->once())
-            ->method('unserialize', $this->equalTo(null))
+            ->method('unserialize')
             ->with($this->equalTo($argumentsString[0]))
             ->will($this->returnValue($arguments[0]));
 

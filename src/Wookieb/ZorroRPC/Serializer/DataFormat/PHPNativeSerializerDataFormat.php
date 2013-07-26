@@ -25,7 +25,7 @@ class PHPNativeSerializerDataFormat implements DataFormatInterface
     /**
      * {@inheritDoc}
      */
-    function unserialize($data, $class = null)
+    function unserialize($data)
     {
         return unserialize($data);
     }

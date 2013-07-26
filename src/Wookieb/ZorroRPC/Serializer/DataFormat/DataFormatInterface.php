@@ -21,10 +21,9 @@ interface DataFormatInterface
      * Deserialize data from string
      *
      * @param string $data
-     * @param string|null $class target class name, if null then serializer MAY try to guess deserialized data type
      * @return mixed
      */
-    function unserialize($data, $class = null);
+    function unserialize($data);
 
     /**
      * Returns supported mime types

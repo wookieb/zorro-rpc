@@ -13,6 +13,13 @@ class JSONDataFormat implements DataFormatInterface
 
     private $serializedPropertiesVisibility = 1792;
 
+    public function __construct($serializedPropertiesVisibility = null)
+    {
+        if ($serializedPropertiesVisibility) {
+            $this->setSerializedPropertiesVisibility($serializedPropertiesVisibility);
+        }
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -44,25 +51,31 @@ class JSONDataFormat implements DataFormatInterface
                 $reflection = new \ReflectionObject($data);
 
                 if (method_exists($data, '__sleep')) {
-                    $keysToSerialize = $data->__sleep();
-                    if (!is_array($keysToSerialize)) {
+                    $propertiesToSerialize = $data->__sleep();
+                    if (!is_array($propertiesToSerialize)) {
                         $msg = 'Invalid data type returned from method __sleep from object of class '.get_class($data).'.';
                         $msg .= '__sleep must return array of keys to serialize.';
                         throw new SerializationException($msg);
                     }
                 } else {
                     $visibility = $this->serializedPropertiesVisibility;
-                    $keysToSerialize = array_map(function ($property) use ($visibility) {
+
+                    // default visibility level for json_encode
+                    if ($visibility === self::VISIBILITY_PUBLIC) {
+                        return $data;
+                    }
+
+                    $propertiesToSerialize = array_map(function ($property) use ($visibility) {
                         /* @var $property \ReflectionProperty */
                         return $property->getName();
                     }, $reflection->getProperties($this->serializedPropertiesVisibility));
                 }
 
                 $dataToSerialize = array();
-                foreach ($keysToSerialize as $key) {
-                    $property = $reflection->getProperty($key);
+                foreach ($propertiesToSerialize as $propertyName) {
+                    $property = $reflection->getProperty($propertyName);
                     $property->setAccessible(true);
-                    $dataToSerialize[$key] = $this->prepareDataToSerialization($property->getValue($data));
+                    $dataToSerialize[$propertyName] = $this->prepareDataToSerialization($property->getValue($data));
                 }
                 return $dataToSerialize;
                 break;
@@ -78,7 +91,7 @@ class JSONDataFormat implements DataFormatInterface
     /**
      * {@inheritDoc}
      */
-    public function unserialize($data, $class = null)
+    public function unserialize($data)
     {
         return json_decode($data);
     }
