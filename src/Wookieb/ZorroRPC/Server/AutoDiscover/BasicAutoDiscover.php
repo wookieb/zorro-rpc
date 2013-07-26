@@ -64,7 +64,7 @@ class BasicAutoDiscover implements AutoDiscoverInterface
             case substr($name, 0, 11) === 'oneWayCall_':
                 return MethodTypes::ONE_WAY;
             case
-                substr($name, 0, 5) === 'push':
+                substr($name, 0, 5) === 'push_':
                 return MethodTypes::PUSH;
         }
         return MethodTypes::BASIC;
