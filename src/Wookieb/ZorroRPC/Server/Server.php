@@ -1,5 +1,6 @@
 <?php
 namespace Wookieb\ZorroRPC\Server;
+
 use Wookieb\ZorroRPC\Exception\ExceptionChanger;
 use Wookieb\ZorroRPC\Serializer\ServerSerializerInterface;
 use Wookieb\ZorroRPC\Transport\MessageTypes;
@@ -50,7 +51,7 @@ class Server implements ServerInterface
      *
      * @var array
      */
-    private static $requiredForwardedHeaders = array('request-id');
+    private static $headersRequiredToForward = array('request-id');
 
     private static $messageTypeToMethodType = array(
         MessageTypes::ONE_WAY_CALL => MethodTypes::ONE_WAY,
@@ -97,7 +98,7 @@ class Server implements ServerInterface
      */
     public function setForwardedHeaders(array $headers)
     {
-        $this->forwardedHeaders = array_merge($headers, self::$requiredForwardedHeaders);
+        $this->forwardedHeaders = array_merge($headers, self::$headersRequiredToForward);
         $this->forwardedHeaders = array_unique($this->forwardedHeaders);
         return $this;
     }
@@ -137,6 +138,12 @@ class Server implements ServerInterface
     {
         if (!$name instanceof Method) {
             $name = new Method($name, $callback, $type);
+        }
+        $methodName = $name->getName();
+        foreach ($this->methods as &$methods) {
+            if (isset($methods[$methodName])) {
+                unset($methods[$methodName]);
+            }
         }
         $this->methods[$name->getType()][$name->getName()] = $name;
         return $this;
@@ -258,15 +265,15 @@ class Server implements ServerInterface
                 $transport = $this->transport;
 
                 // hack for php 5.3 which makes "createResponse" accessible from closure
-                $create = new \ReflectionMethod($this, 'createResponse');
-                $create->setAccessible(true);
+                $createResponseMethod = new \ReflectionMethod($this, 'createResponse');
+                $createResponseMethod->setAccessible(true);
 
-                $ack = function ($result = null) use ($self, &$ackCalled, $response, $request, $transport, $create) {
+                $ack = function ($result = null) use ($self, &$ackCalled, $response, $request, $transport, $createResponseMethod) {
                     if ($ackCalled) {
                         return;
                     }
                     $ackCalled = true;
-                    $create->invoke($self, MessageTypes::PUSH_ACK, $result, $response, $request);
+                    $createResponseMethod->invoke($self, MessageTypes::PUSH_ACK, $result, $response, $request);
                     $transport->sendResponse($response);
                 };
                 try {
@@ -306,6 +313,10 @@ class Server implements ServerInterface
         $this->forwardHeaders($request, $response);
 
         if ($type === MessageTypes::ONE_WAY_CALL_ACK || $type === MessageTypes::PONG) {
+            return $response;
+        }
+
+        if ($result === null) {
             return $response;
         }
 

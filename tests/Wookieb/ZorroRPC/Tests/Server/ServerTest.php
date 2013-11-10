@@ -1,5 +1,6 @@
 <?php
 namespace Wookieb\ZorroRPC\Tests\Server;
+
 use Wookieb\ZorroRPC\Exception\NoSuchMethodException;
 use Wookieb\ZorroRPC\Transport\ServerTransportInterface;
 use Wookieb\ZorroRPC\Serializer\ServerSerializerInterface;
@@ -34,7 +35,6 @@ class ServerTest extends \PHPUnit_Framework_TestCase
     public function testRegisterMethodByProvidingEachArgument()
     {
         $method = new Method('rpcMethod', 'array_map', MethodTypes::ONE_WAY);
-
         $result = $this->server->registerMethod($method->getName(), $method->getCallback(), $method->getType());
         $this->assertSame($this->server, $result, 'Method chaining violation at "registerMethod"');
         $this->assertEquals(array($method), $this->server->getMethods());
@@ -47,6 +47,17 @@ class ServerTest extends \PHPUnit_Framework_TestCase
         $result = $this->server->registerMethod($method);
         $this->assertSame($this->server, $result, 'Method chaining violation at "registerMethod"');
         $this->assertEquals(array($method), $this->server->getMethods());
+    }
+
+    public function testRegisterMethodPreventsFromHaving2MethodsWithSameNameAndDifferentType()
+    {
+        $method = new Method('rpcMethod', 'array_map', MethodTypes::BASIC);
+        $method2 = new Method('rpcMethod', 'array_map', MethodTypes::PUSH);
+
+        $this->server->registerMethod($method)
+            ->registerMethod($method2);
+
+        $this->assertEquals(array($method2), $this->server->getMethods());
     }
 
     public function testRegisterMethods()

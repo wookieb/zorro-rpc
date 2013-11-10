@@ -1,5 +1,6 @@
 <?php
 namespace Wookieb\ZorroRPC\Server;
+
 use Wookieb\ZorroRPC\Headers\Headers;
 use Wookieb\ZorroRPC\Transport\Request;
 
@@ -26,7 +27,7 @@ class Method
      * @param string $name
      * @param callback $callback
      * @param int $type one of value from MethodTypes dictionary
-     *
+     * @throws \InvalidArgumentException
      */
     public function __construct($name, $callback, $type = MethodTypes::BASIC)
     {
@@ -132,7 +133,7 @@ class Method
         }
 
         if ($callback && $this->type !== MethodTypes::PUSH) {
-            throw new \InvalidArgumentException('Callback argument is only available for PUSH methods');
+            throw new \InvalidArgumentException('Callback argument is available only for PUSH methods');
         }
 
         if (!$responseHeaders && $this->type !== MethodTypes::ONE_WAY) {

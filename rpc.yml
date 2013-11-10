@@ -1,0 +1,10 @@
+import:
+  - another_rpc_schema.yml
+
+methods:
+  getUser:
+    arguments:
+      id: integer
+    result:
+      type: User
+      nullable: true
