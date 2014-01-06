@@ -9,7 +9,7 @@ use Wookieb\ZorroRPC\Dictionary;
  */
 class MethodTypes extends Dictionary
 {
-    const BASIC = 1;
-    const ONE_WAY = 2;
-    const PUSH = 3;
+    const BASIC = 'basic';
+    const ONE_WAY = 'one-way';
+    const PUSH = 'push';
 }

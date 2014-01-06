@@ -104,7 +104,6 @@ class PushTest extends RPCBase
         $response = new Response(MessageTypes::ERROR, $exception);
         $test = $this;
         $this->useResponse($request, $response, function (Response $response) use ($test) {
-
             $test->assertEquals(array(), $response->getResultBody()->getTrace(), 'Trace of exception must be empty');
         });
 
@@ -127,17 +126,17 @@ class PushTest extends RPCBase
             }));
 
         $test = $this;
-        $errorCatched = false;
-        $this->object->setOnErrorCallback(function (\Exception $error) use ($exception, $test, &$errorCatched) {
+        $errorCaught = false;
+        $this->object->setOnErrorCallback(function (\Exception $error) use ($exception, $test, &$errorCaught) {
             $test->assertEquals($exception->getMessage(), $error->getMessage());
-            $errorCatched = true;
+            $errorCaught = true;
         });
 
         $response = new Response(MessageTypes::PUSH_ACK, '');
         $this->useResponse($request, $response);
 
         $this->object->handleCall();
-        $this->assertTrue($errorCatched);
+        $this->assertTrue($errorCaught);
     }
 
     public function testHeadersForwarding()

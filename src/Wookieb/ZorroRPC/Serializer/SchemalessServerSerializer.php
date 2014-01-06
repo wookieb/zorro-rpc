@@ -33,7 +33,7 @@ class SchemalessServerSerializer extends AbstractSerializer implements ServerSer
     /**
      * {@inheritDoc}
      */
-    function serializeError($method, \Exception $error, $mimeType = null)
+    public function serializeError($method, \Exception $error, $mimeType = null)
     {
         return $this->getDataFormatForMimeType($mimeType)->serialize($error);
     }

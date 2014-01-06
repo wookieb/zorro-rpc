@@ -51,7 +51,8 @@ class ZeroMQServerTransport implements ServerTransportInterface
             throw new TransportException('Unable to receive request', null, $e);
         }
         $this->waitingForResponse = true;
-        $requestType = (int)$message[0];
+        $requestType = $message[0];
+
         if (!MessageTypes::isValid($requestType)) {
             throw new FormatException('Invalid request type "'.$requestType.'"', $message);
         }
@@ -80,7 +81,7 @@ class ZeroMQServerTransport implements ServerTransportInterface
             (string)$response->getHeaders()
         );
 
-        if ($response->getType() !== MessageTypes::PONG && $response->getType() !== MessageTypes::ONE_WAY_CALL_ACK) {
+        if (MessageTypes::isResponseTypeWithResult($response->getType())) {
             $message[2] = $response->getResultBody();
         }
 

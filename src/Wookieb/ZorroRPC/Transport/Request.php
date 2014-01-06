@@ -76,7 +76,7 @@ class Request
      */
     public function setType($type)
     {
-        $this->type = (int)$type;
+        $this->type = $type;
         return $this;
     }
 

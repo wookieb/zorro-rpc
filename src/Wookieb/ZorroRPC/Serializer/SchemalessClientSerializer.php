@@ -27,10 +27,8 @@ class SchemalessClientSerializer extends AbstractSerializer implements ClientSer
     /**
      * {@inheritDoc}
      */
-    function unserializeError($method, $error, $mimeType = null)
+    public function unserializeError($method, $error, $mimeType = null)
     {
         return $this->getDataFormatForMimeType($mimeType)->unserialize($error);
     }
-
-
 }

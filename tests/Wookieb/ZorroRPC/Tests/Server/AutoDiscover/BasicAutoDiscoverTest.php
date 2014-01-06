@@ -32,7 +32,7 @@ class BasicAutoDiscoverTest extends \PHPUnit_Framework_TestCase
                 break;
             }
         }
-        $this->assertTrue($found, 'Method "'.$name.'" of type "'.MethodTypes::getName($type).'" not discovered');
+        $this->assertTrue($found, 'Method "'.$name.'" of type "'.$type.'" not discovered');
     }
 
     public function testDiscoverShouldReturnListOfMethodObjects()

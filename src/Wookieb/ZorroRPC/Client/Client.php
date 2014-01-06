@@ -165,15 +165,13 @@ class Client implements ClientInterface
         if ($response->getType() !== self::$validResponseType[$request->getType()]) {
             $msg = sprintf(
                 'Invalid response type "%s" for request type "%s"',
-                MessageTypes::getName($response->getType()),
-                MessageTypes::getName($request->getType())
+                $response->getType(),
+                $request->getType()
             );
             throw new FormatException($msg, $response);
         }
 
-        if ($response->getType() === MessageTypes::ONE_WAY_CALL_ACK ||
-            $response->getType() === MessageTypes::PONG
-        ) {
+        if (!MessageTypes::isResponseTypeWithResult($response->getType())) {
             return;
         }
 

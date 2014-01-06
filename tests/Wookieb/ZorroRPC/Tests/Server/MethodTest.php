@@ -1,6 +1,7 @@
 <?php
 
 namespace Wookieb\ZorroRPC\Tests\Server;
+
 use Wookieb\ZorroRPC\Headers\Headers;
 use Wookieb\ZorroRPC\Server\Method;
 use Wookieb\ZorroRPC\Server\MethodTypes;
@@ -67,7 +68,8 @@ class MethodTest extends \PHPUnit_Framework_TestCase
     {
         $method = new Method('name', function () {
         });
-        $this->setExpectedException('\InvalidArgumentException', 'only available for PUSH methods');
+
+        $this->setExpectedException('\InvalidArgumentException', 'available only for PUSH methods');
         $method->call(array(1), $this->request, $this->headers, function () {
 
         });

@@ -45,10 +45,8 @@ class ExceptionChanger
         self::replaceProperty($e, 'trace', array());
         self::replaceProperty($e, 'file', '');
         self::replaceProperty($e, 'line', 0);
-        try {
-            self::replaceProperty($e, 'xdebug_message', '');
-        } catch (\ReflectionException $e) {
-
+        if (isset($e->xdebug_message)) {
+            unset($e->xdebug_message);
         }
     }
 

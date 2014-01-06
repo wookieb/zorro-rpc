@@ -107,12 +107,12 @@ class ZeroMQClientTransport implements ClientTransportInterface
             throw new FormatException('Invalid response - no headers', $result);
         }
 
-        $response = new Response((int)$result[0]);
+        $response = new Response($result[0]);
         $response->setHeaders(
             new Headers(Parser::parseHeaders($result[1]))
         );
 
-        if ($response->getType() === MessageTypes::ONE_WAY_CALL_ACK || $response->getType() === MessageTypes::PONG) {
+        if (!MessageTypes::isResponseTypeWithResult($response->getType())) {
             return $response;
         }
 

@@ -1,5 +1,6 @@
 <?php
 namespace Wookieb\ZorroRPC\Transport;
+
 use Wookieb\ZorroRPC\Dictionary;
 
 /**
@@ -9,15 +10,39 @@ use Wookieb\ZorroRPC\Dictionary;
  */
 class MessageTypes extends Dictionary
 {
-    const REQUEST = 1;
-    const RESPONSE = 2;
-    const PING = 3;
-    const PONG = 4;
-    const ONE_WAY_CALL = 5;
-    const ONE_WAY_CALL_ACK = 6;
-    const ERROR = 7;
-    const PUSH = 8;
-    const PUSH_ACK = 9;
+    const REQUEST = 'request';
+    const RESPONSE = 'response';
+    const PING = 'ping';
+    const PONG = 'pong';
+    const ONE_WAY_CALL = 'one-way-call';
+    const ONE_WAY_CALL_ACK = 'one-way-call-ack';
+    const ERROR = 'error';
+    const PUSH = 'push';
+    const PUSH_ACK = 'push-ack';
+
+    private static $responseTypes = array(
+        self::RESPONSE,
+        self::PONG,
+        self::ONE_WAY_CALL_ACK,
+        self::ERROR,
+        self::PUSH_ACK
+    );
+
+    private static $responseTypesWithResult = array(
+        self::RESPONSE,
+        self::PUSH_ACK,
+        self::ERROR
+    );
+
+    public static function isResponseType($type)
+    {
+        return in_array($type, self::$responseTypes);
+    }
+
+    public static function isResponseTypeWithResult($type)
+    {
+        return self::isResponseType($type) && in_array($type, self::$responseTypesWithResult);
+    }
 
     protected static $types;
 }

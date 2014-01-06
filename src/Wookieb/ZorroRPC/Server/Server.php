@@ -312,11 +312,7 @@ class Server implements ServerInterface
         $response->setType($type);
         $this->forwardHeaders($request, $response);
 
-        if ($type === MessageTypes::ONE_WAY_CALL_ACK || $type === MessageTypes::PONG) {
-            return $response;
-        }
-
-        if ($result === null) {
+        if (!MessageTypes::isResponseTypeWithResult($type)) {
             return $response;
         }
 

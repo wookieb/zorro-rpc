@@ -36,20 +36,4 @@ abstract class Dictionary
         }
         return self::$cache[$class];
     }
-
-    /**
-     * Return the name of given value
-     *
-     * @param mixed $value
-     * @return string
-     * @throws \OutOfBoundsException
-     */
-    public static function getName($value)
-    {
-        $key = array_search($value, self::getAll(), true);
-        if ($key === false) {
-            throw new \OutOfBoundsException('There is no name in dictionary for given value "'.$value.'"');
-        }
-        return $key;
-    }
 }

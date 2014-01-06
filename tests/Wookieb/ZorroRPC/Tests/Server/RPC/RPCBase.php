@@ -1,6 +1,7 @@
 <?php
 namespace Wookieb\ZorroRPC\Tests\Server\RPC;
 
+use Wookieb\ZorroRPC\Exception\ExceptionChanger;
 use Wookieb\ZorroRPC\Serializer\ServerSerializerInterface;
 use Wookieb\ZorroRPC\Server\Server;
 use Wookieb\ZorroRPC\Transport\MessageTypes;
@@ -80,7 +81,6 @@ abstract class RPCBase extends \PHPUnit_Framework_TestCase
         } else {
             $this->serializer->expects($this->never())
                 ->method('serializeResult');
-
         }
 
         if (!$filter) {

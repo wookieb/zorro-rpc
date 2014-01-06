@@ -10,11 +10,10 @@ use Wookieb\ZorroRPC\Serializer\DataFormat\PHPNativeSerializerDataFormat;
 use Wookieb\ZorroRPC\Headers\Headers;
 
 
-$transport = ZeroMQClientTransport::create('tcp://0.0.0.0:1500');
+$transport = ZeroMQClientTransport::create('tcp://0.0.0.0:1500', 10);
 $serializer = new SchemalessClientSerializer(new JSONDataFormat());
 
 $client = new Client($transport, $serializer);
-
 // uncomment these lines if u would like to use php serialization format
 /*
  $serializer->registerDataFormat(new PHPNativeSerializerDataFormat());
@@ -23,7 +22,7 @@ $client->setDefaultHeaders(new Headers(array(
 )));
 */
 echo 'Basic'.PHP_EOL;
-echo $client->call('basic', array('user')).PHP_EOL;
+echo $client->call('basic2', array('user')).PHP_EOL;
 
 echo 'Serialization test'.PHP_EOL;
 var_dump($client->call('serializationTest', array('test1', 'test2')));
