@@ -10,8 +10,7 @@
     ],
     "require": {
         "ext-zmq": "*",
-        "wookieb/assert": "0.*",
-        "wookieb/zorro-data-schema": "0.*"
+        "wookieb/assert": "0.*"
     },
     "require-dev": {
         "phpunit/phpunit": "3.7.*"
