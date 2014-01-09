@@ -100,4 +100,41 @@ class PingTest extends RPCBase
         $this->useResponse($request, $response);
         $this->object->ping();
     }
+
+    public function testUsingCustomHeaders()
+    {
+        $headers = new Headers(array(
+            'Content-Type' => 'content'
+        ));
+        $request = new Request(MessageTypes::PING, null, null, $headers);
+        $this->useRequest($request);
+
+        $response = new Response(MessageTypes::PONG);
+        $this->useResponse($request, $response);
+        $this->object->ping($headers);
+    }
+
+    public function testUsingCustomHeadersThatOverrideDefaultHeaders()
+    {
+        $defaultHeaders = new Headers(array(
+            'custom-header' => 'custom header value',
+            'next-custom-header' => 'next custom header value'
+        ));
+        $this->object->setDefaultHeaders($defaultHeaders);
+
+        $headers = new Headers(array(
+            'custom-header' => 'content'
+        ));
+
+        $request = new Request(MessageTypes::PING, null, null, $headers);
+        $request->setHeaders(new Headers(array(
+            'custom-header' => 'content',
+            'next-custom-header' => 'next custom header value'
+        )));
+        $this->useRequest($request);
+
+        $response = new Response(MessageTypes::PONG);
+        $this->useResponse($request, $response);
+        $this->object->ping($headers);
+    }
 }

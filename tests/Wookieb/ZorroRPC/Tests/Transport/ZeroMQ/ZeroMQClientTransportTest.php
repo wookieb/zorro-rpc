@@ -143,28 +143,28 @@ class ZeroMQClientTransportTest extends \PHPUnit_Framework_TestCase
 
     public function testSendOneWayCallRequest()
     {
-        $message = array(MessageTypes::ONE_WAY_CALL, '', 'method', 'arg1', 'arg2');
+        $message = array(MessageTypes::ONE_WAY, '', 'method', 'arg1', 'arg2');
         $this->useRequestMessage($message);
 
-        $request = new Request(MessageTypes::ONE_WAY_CALL, 'method', array('arg1', 'arg2'));
+        $request = new Request(MessageTypes::ONE_WAY, 'method', array('arg1', 'arg2'));
         $this->object->sendRequest($request);
     }
 
     public function testSendOneWayCallRequestWithHeaders()
     {
-        $message = array(MessageTypes::ONE_WAY_CALL, (string)$this->headers, 'method', 'arg1', 'arg2');
+        $message = array(MessageTypes::ONE_WAY, (string)$this->headers, 'method', 'arg1', 'arg2');
         $this->useRequestMessage($message);
 
-        $request = new Request(MessageTypes::ONE_WAY_CALL, 'method', array('arg1', 'arg2'), $this->headers);
+        $request = new Request(MessageTypes::ONE_WAY, 'method', array('arg1', 'arg2'), $this->headers);
         $this->object->sendRequest($request);
     }
 
     public function testSendOneWayCallRequestWithoutArguments()
     {
-        $message = array(MessageTypes::ONE_WAY_CALL, '', 'method');
+        $message = array(MessageTypes::ONE_WAY, '', 'method');
         $this->useRequestMessage($message);
 
-        $request = new Request(MessageTypes::ONE_WAY_CALL, 'method');
+        $request = new Request(MessageTypes::ONE_WAY, 'method');
         $this->object->sendRequest($request);
     }
 
@@ -179,7 +179,7 @@ class ZeroMQClientTransportTest extends \PHPUnit_Framework_TestCase
         $this->setExpectedException('Wookieb\ZorroRPC\Exception\TransportException', 'Cannot send request');
 
         try {
-            $request = new Request(MessageTypes::ONE_WAY_CALL, 'method');
+            $request = new Request(MessageTypes::ONE_WAY, 'method');
             $this->object->sendRequest($request);
         } catch (TransportException $e) {
             $this->assertSame($exception, $e->getPrevious());
@@ -257,19 +257,19 @@ class ZeroMQClientTransportTest extends \PHPUnit_Framework_TestCase
 
     public function testReceivingOneWayCallAckResponse()
     {
-        $message = array(MessageTypes::ONE_WAY_CALL_ACK, '');
+        $message = array(MessageTypes::ONE_WAY_ACK, '');
         $this->useResponseMessage($message);
 
-        $response = new Response(MessageTypes::ONE_WAY_CALL_ACK);
+        $response = new Response(MessageTypes::ONE_WAY_ACK);
         $this->assertEquals($response, $this->object->receiveResponse());
     }
 
     public function testReceivingOneWayCallAckResponseWithHeaders()
     {
-        $message = array(MessageTypes::ONE_WAY_CALL_ACK, (string)$this->headers);
+        $message = array(MessageTypes::ONE_WAY_ACK, (string)$this->headers);
         $this->useResponseMessage($message);
 
-        $response = new Response(MessageTypes::ONE_WAY_CALL_ACK, null, $this->headers);
+        $response = new Response(MessageTypes::ONE_WAY_ACK, null, $this->headers);
         $this->assertEquals($response, $this->object->receiveResponse());
     }
 

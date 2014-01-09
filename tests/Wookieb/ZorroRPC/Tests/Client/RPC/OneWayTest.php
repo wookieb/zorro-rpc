@@ -14,10 +14,10 @@ class OneWayTest extends RPCBase
 {
     public function testReceivingResponse()
     {
-        $request = new Request(MessageTypes::ONE_WAY_CALL, 'oneWay');
+        $request = new Request(MessageTypes::ONE_WAY, 'oneWay');
         $this->useRequest($request);
 
-        $response = new Response(MessageTypes::ONE_WAY_CALL_ACK);
+        $response = new Response(MessageTypes::ONE_WAY_ACK);
         $this->useResponse($request, $response, false);
 
         $result = $this->object->oneWayCall('oneWay');
@@ -26,7 +26,7 @@ class OneWayTest extends RPCBase
 
     public function testReceivingError()
     {
-        $request = new Request(MessageTypes::ONE_WAY_CALL, 'oneWay');
+        $request = new Request(MessageTypes::ONE_WAY, 'oneWay');
         $this->useRequest($request);
 
         $response = new Response(MessageTypes::ERROR, array('some_error'));
@@ -45,7 +45,7 @@ class OneWayTest extends RPCBase
 
     public function testReceivingException()
     {
-        $request = new Request(MessageTypes::ONE_WAY_CALL, 'oneWay');
+        $request = new Request(MessageTypes::ONE_WAY, 'oneWay');
         $this->useRequest($request);
 
         $exception = new \Exception('RPC Error');
@@ -65,7 +65,7 @@ class OneWayTest extends RPCBase
 
     public function testTimeout()
     {
-        $request = new Request(MessageTypes::ONE_WAY_CALL, 'oneWay');
+        $request = new Request(MessageTypes::ONE_WAY, 'oneWay');
         $this->useRequest($request);
 
         $this->useTimeout();
@@ -76,7 +76,7 @@ class OneWayTest extends RPCBase
 
     public function testReceivingFormatExceptionWhenInvalidResponseHasBeenReceived()
     {
-        $request = new Request(MessageTypes::ONE_WAY_CALL, 'oneWay');
+        $request = new Request(MessageTypes::ONE_WAY, 'oneWay');
         $this->useRequest($request);
 
         $response = new Response(MessageTypes::RESPONSE);
@@ -95,12 +95,12 @@ class OneWayTest extends RPCBase
         ));
         $this->object->setDefaultHeaders($defaultHeaders);
 
-        $request = new Request(MessageTypes::ONE_WAY_CALL, 'oneWay', null, new Headers(array(
+        $request = new Request(MessageTypes::ONE_WAY, 'oneWay', null, new Headers(array(
             'custom-header' => 'how much is the fish'
         )));
         $this->useRequest($request, $defaultHeaders, false);
 
-        $response = new Response(MessageTypes::ONE_WAY_CALL_ACK);
+        $response = new Response(MessageTypes::ONE_WAY_ACK);
         $this->useResponse($request, $response, false);
         $this->object->oneWayCall('oneWay');
     }
@@ -111,10 +111,10 @@ class OneWayTest extends RPCBase
             'custom-headers' => 'custom header value'
         ));
 
-        $request = new Request(MessageTypes::ONE_WAY_CALL, 'oneWay', null, $headers);
+        $request = new Request(MessageTypes::ONE_WAY, 'oneWay', null, $headers);
         $this->useRequest($request);
 
-        $response = new Response(MessageTypes::ONE_WAY_CALL_ACK);
+        $response = new Response(MessageTypes::ONE_WAY_ACK);
         $this->useResponse($request, $response, false);
         $this->object->oneWayCall('oneWay', array(), $headers);
     }
@@ -135,10 +135,10 @@ class OneWayTest extends RPCBase
         $requestHeaders = clone $defaultHeaders;
         $requestHeaders->merge($headers);
 
-        $request = new Request(MessageTypes::ONE_WAY_CALL, 'oneWay', null, $requestHeaders);
+        $request = new Request(MessageTypes::ONE_WAY, 'oneWay', null, $requestHeaders);
         $this->useRequest($request);
 
-        $response = new Response(MessageTypes::ONE_WAY_CALL_ACK);
+        $response = new Response(MessageTypes::ONE_WAY_ACK);
         $this->useResponse($request, $response, false);
         $this->object->oneWayCall('oneWay', array(), $headers);
     }

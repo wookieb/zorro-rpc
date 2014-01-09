@@ -33,7 +33,7 @@ class Client implements ClientInterface
 
     private static $validResponseType = array(
         MessageTypes::REQUEST => MessageTypes::RESPONSE,
-        MessageTypes::ONE_WAY_CALL => MessageTypes::ONE_WAY_CALL_ACK,
+        MessageTypes::ONE_WAY => MessageTypes::ONE_WAY_ACK,
         MessageTypes::PUSH => MessageTypes::PUSH_ACK,
         MessageTypes::PING => MessageTypes::PONG
     );
@@ -94,7 +94,7 @@ class Client implements ClientInterface
      */
     public function oneWayCall($method, array $arguments = array(), Headers $headers = null)
     {
-        $request = $this->createRequest(MessageTypes::ONE_WAY_CALL, $method, $arguments, $headers);
+        $request = $this->createRequest(MessageTypes::ONE_WAY, $method, $arguments, $headers);
         $this->send($request);
         $this->obtainResponse($this->receive(), $request);
     }
@@ -102,9 +102,9 @@ class Client implements ClientInterface
     /**
      * {@inheritDoc}
      */
-    public function ping()
+    public function ping(Headers $headers = null)
     {
-        $request = $this->createRequest(MessageTypes::PING);
+        $request = $this->createRequest(MessageTypes::PING, null, null, $headers);
         $start = microtime(true);
         $this->send($request);
         $response = $this->receive();

@@ -54,7 +54,7 @@ class Server implements ServerInterface
     private static $headersRequiredToForward = array('request-id');
 
     private static $messageTypeToMethodType = array(
-        MessageTypes::ONE_WAY_CALL => MethodTypes::ONE_WAY,
+        MessageTypes::ONE_WAY => MethodTypes::ONE_WAY,
         MessageTypes::REQUEST => MethodTypes::BASIC,
         MessageTypes::PUSH => MethodTypes::PUSH
     );
@@ -253,7 +253,7 @@ class Server implements ServerInterface
                 break;
 
             case MethodTypes::ONE_WAY:
-                $this->createResponse(MessageTypes::ONE_WAY_CALL_ACK, null, $response, $request);
+                $this->createResponse(MessageTypes::ONE_WAY_ACK, null, $response, $request);
                 $this->transport->sendResponse($response);
                 $method->call($arguments, $request);
                 break;

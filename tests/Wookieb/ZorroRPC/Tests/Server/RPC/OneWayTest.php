@@ -27,7 +27,7 @@ class OneWayTest extends RPCBase
         ));
         $this->object->setDefaultHeaders($defaultHeaders);
 
-        $request = new Request(MessageTypes::ONE_WAY_CALL, 'owc', array('zia'));
+        $request = new Request(MessageTypes::ONE_WAY, 'owc', array('zia'));
         $this->useRequest($request);
 
         $this->rpcTarget->expects($this->once())
@@ -37,7 +37,7 @@ class OneWayTest extends RPCBase
                 return 'OK';
             }));
 
-        $response = new Response(MessageTypes::ONE_WAY_CALL_ACK, null, new Headers(array(
+        $response = new Response(MessageTypes::ONE_WAY_ACK, null, new Headers(array(
             'custom-header' => 'custom header value',
             'next-custom-header' => 'sum ting wong'
         )));
@@ -51,7 +51,7 @@ class OneWayTest extends RPCBase
         {
             $this->object->setForwardedHeaders(array('custom-header'));
 
-            $request = new Request(MessageTypes::ONE_WAY_CALL, 'owc', array('zia'));
+            $request = new Request(MessageTypes::ONE_WAY, 'owc', array('zia'));
             $request->getHeaders()
                 ->set('request-id', '1234567890')
                 ->set('custom-header', 'some value')
@@ -64,7 +64,7 @@ class OneWayTest extends RPCBase
                 ->with('zia')
                 ->will($this->returnValue('OK'));
 
-            $response = new Response(MessageTypes::ONE_WAY_CALL_ACK);
+            $response = new Response(MessageTypes::ONE_WAY_ACK);
             $response->getHeaders()
                 ->set('request-id', '1234567890')
                 ->set('custom-header', 'some value');
@@ -76,7 +76,7 @@ class OneWayTest extends RPCBase
 
     public function testReceivingArguments()
     {
-        $request = new Request(MessageTypes::ONE_WAY_CALL, 'owc', array(1));
+        $request = new Request(MessageTypes::ONE_WAY, 'owc', array(1));
         $this->useRequest($request);
 
         $test = $this;
@@ -89,7 +89,7 @@ class OneWayTest extends RPCBase
                 $test->assertArrayNotHasKey(2, $arguments, 'one way call cannot get response headers as argument');
             }));
 
-        $response = new Response(MessageTypes::ONE_WAY_CALL_ACK);
+        $response = new Response(MessageTypes::ONE_WAY_ACK);
 
         $this->useResponse($request, $response);
         $this->object->handleCall();
@@ -97,7 +97,7 @@ class OneWayTest extends RPCBase
 
     public function testArgumentsShouldBeUnserializedUsingRequestContentType()
     {
-        $request = new Request(MessageTypes::ONE_WAY_CALL, 'owc', array('zia'));
+        $request = new Request(MessageTypes::ONE_WAY, 'owc', array('zia'));
         $request->getHeaders()
             ->set('content-type', 'application/wookieb');
 
@@ -108,7 +108,7 @@ class OneWayTest extends RPCBase
             ->with('zia')
             ->will($this->returnValue('OK'));
 
-        $response = new Response(MessageTypes::ONE_WAY_CALL_ACK);
+        $response = new Response(MessageTypes::ONE_WAY_ACK);
 
         $this->useResponse($request, $response);
         $this->object->handleCall();
@@ -116,7 +116,7 @@ class OneWayTest extends RPCBase
 
     public function testDefaultArguments()
     {
-        $request = new Request(MessageTypes::ONE_WAY_CALL, 'owcWithDefaults', array('zia'));
+        $request = new Request(MessageTypes::ONE_WAY, 'owcWithDefaults', array('zia'));
         $this->useRequest($request);
 
         $test = $this;
@@ -131,7 +131,7 @@ class OneWayTest extends RPCBase
             return 'OK';
         }, MethodTypes::ONE_WAY);
 
-        $response = new Response(MessageTypes::ONE_WAY_CALL_ACK);
+        $response = new Response(MessageTypes::ONE_WAY_ACK);
 
         $this->useResponse($request, $response);
         $this->object->handleCall();
@@ -139,7 +139,7 @@ class OneWayTest extends RPCBase
 
     public function testNoArguments()
     {
-        $request = new Request(MessageTypes::ONE_WAY_CALL, 'owc');
+        $request = new Request(MessageTypes::ONE_WAY, 'owc');
         $this->useRequest($request);
 
         $this->rpcTarget->expects($this->once())
@@ -147,7 +147,7 @@ class OneWayTest extends RPCBase
             ->with($this->isInstanceOf('Wookieb\ZorroRPC\Transport\Request'))
             ->will($this->returnValue('OK'));
 
-        $response = new Response(MessageTypes::ONE_WAY_CALL_ACK);
+        $response = new Response(MessageTypes::ONE_WAY_ACK);
         $this->useResponse($request, $response);
         $this->object->handleCall();
     }

@@ -150,29 +150,29 @@ class ZeroMQServerTransportTest extends \PHPUnit_Framework_TestCase
 
     public function testReceivingOneWayCallRequest()
     {
-        $message = array(MessageTypes::ONE_WAY_CALL, '', 'method', 'arg1', 'arg2');
+        $message = array(MessageTypes::ONE_WAY, '', 'method', 'arg1', 'arg2');
         $this->useRequestMessage($message);
 
-        $request = new Request(MessageTypes::ONE_WAY_CALL, 'method', array('arg1', 'arg2'));
+        $request = new Request(MessageTypes::ONE_WAY, 'method', array('arg1', 'arg2'));
         $this->assertEquals($request, $this->object->receiveRequest());
         $this->assertWaitingForResponse(true);
     }
 
     public function testReceivingOneWayCallRequestWithHeaders()
     {
-        $message = array(MessageTypes::ONE_WAY_CALL, (string)$this->headers, 'method', 'arg1', 'arg2');
+        $message = array(MessageTypes::ONE_WAY, (string)$this->headers, 'method', 'arg1', 'arg2');
         $this->useRequestMessage($message);
 
-        $request = new Request(MessageTypes::ONE_WAY_CALL, 'method', array('arg1', 'arg2'), $this->headers);
+        $request = new Request(MessageTypes::ONE_WAY, 'method', array('arg1', 'arg2'), $this->headers);
         $this->assertEquals($request, $this->object->receiveRequest());
     }
 
     public function testReceivingOneWayCallRequestWithoutArguments()
     {
-        $message = array(MessageTypes::ONE_WAY_CALL, '', 'method');
+        $message = array(MessageTypes::ONE_WAY, '', 'method');
         $this->useRequestMessage($message);
 
-        $request = new Request(MessageTypes::ONE_WAY_CALL, 'method');
+        $request = new Request(MessageTypes::ONE_WAY, 'method');
         $this->assertEquals($request, $this->object->receiveRequest());
     }
 
@@ -284,20 +284,20 @@ class ZeroMQServerTransportTest extends \PHPUnit_Framework_TestCase
 
     public function testSendingOneWayCallAckResponse()
     {
-        $message = array(MessageTypes::ONE_WAY_CALL_ACK, '');
+        $message = array(MessageTypes::ONE_WAY_ACK, '');
         $this->useResponseMessage($message);
 
-        $response = new Response(MessageTypes::ONE_WAY_CALL_ACK);
+        $response = new Response(MessageTypes::ONE_WAY_ACK);
         $this->object->sendResponse($response);
         $this->assertWaitingForResponse(false);
     }
 
     public function testSendingOneWayCallAckResponseWithHeaders()
     {
-        $message = array(MessageTypes::ONE_WAY_CALL_ACK, (string)$this->headers);
+        $message = array(MessageTypes::ONE_WAY_ACK, (string)$this->headers);
         $this->useResponseMessage($message);
 
-        $response = new Response(MessageTypes::ONE_WAY_CALL_ACK, null, $this->headers);
+        $response = new Response(MessageTypes::ONE_WAY_ACK, null, $this->headers);
         $this->object->sendResponse($response);
         $this->assertWaitingForResponse(false);
     }

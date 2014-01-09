@@ -110,6 +110,6 @@ class Request
      */
     public function isExpectingResult()
     {
-        return $this->type !== MessageTypes::PING && $this->type !== MessageTypes::ONE_WAY_CALL;
+        return $this->type !== MessageTypes::PING && $this->type !== MessageTypes::ONE_WAY;
     }
 }

@@ -90,7 +90,7 @@ class BasicTest extends RPCBase
         $request = new Request(MessageTypes::REQUEST, 'basic');
         $this->useRequest($request);
 
-        $response = new Response(MessageTypes::ONE_WAY_CALL_ACK);
+        $response = new Response(MessageTypes::ONE_WAY_ACK);
         $this->useResponse($request, $response, false);
 
         $this->setExpectedException('Wookieb\ZorroRPC\Exception\FormatException', 'Invalid response type');
