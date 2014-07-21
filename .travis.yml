@@ -10,5 +10,6 @@ branches:
     - master
 
 before_script:
+ - pecl install zmq-beta
  - phpenv config-add php.ini
  - composer install
